@@ -34,5 +34,17 @@ namespace PQDIFExplorer.Properties {
                 this["WindowSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("PQDiffractor.exe")]
+        public string PQDiffractorPath {
+            get {
+                return ((string)(this["PQDiffractorPath"]));
+            }
+            set {
+                this["PQDiffractorPath"] = value;
+            }
+        }
     }
 }

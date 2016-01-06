@@ -23,15 +23,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using GSF;
 using GSF.PQDIF;
 using GSF.PQDIF.Logical;
 using GSF.PQDIF.Physical;
+using Microsoft.Win32;
 using PQDIFExplorer.Properties;
 
 namespace PQDIFExplorer
@@ -41,6 +45,7 @@ namespace PQDIFExplorer
     /// </summary>
     public partial class MainWindow : Form
     {
+        private string m_filePath;
         private List<DetailsWindow> m_detailsWindows;
 
         /// <summary>
@@ -52,7 +57,7 @@ namespace PQDIFExplorer
         }
 
         // Opens the given file for exploration.
-        private void OpenFile(string fileName)
+        private void OpenFile(string filePath)
         {
             Record record;
             ContainerRecord containerRecord;
@@ -61,7 +66,7 @@ namespace PQDIFExplorer
             RecordTree.Nodes.Clear();
 
             // Use the physical parser to more closely display the structure of the file
-            using (PhysicalParser parser = new PhysicalParser(fileName))
+            using (PhysicalParser parser = new PhysicalParser(filePath))
             {
                 parser.Open();
 
@@ -84,6 +89,8 @@ namespace PQDIFExplorer
                     RecordTree.Nodes.Add(ToTreeNode(record));
                 }
             }
+
+            m_filePath = filePath;
         }
 
         private TreeNode ToTreeNode(Record record)
@@ -279,14 +286,14 @@ namespace PQDIFExplorer
             // Use the format string specified by the tag
             // or a default format string if not specified
             if (element.TypeOfValue == PhysicalType.Timestamp)
-                valueString = string.Format(tag.FormatString ?? "{0:yyyy-MM-dd HH:mm:ss.fffffff}", value);
+                valueString = string.Format(tag?.FormatString ?? "{0:yyyy-MM-dd HH:mm:ss.fffffff}", value);
             else
-                valueString = string.Format(tag.FormatString ?? "{0}", value);
+                valueString = string.Format(tag?.FormatString ?? "{0}", value);
 
             // Determine whether the tag definition contains
             // a list of identifiers which can be used to
             // display the value in a more readable format
-            identifiers = tag.ValidIdentifiers;
+            identifiers = tag?.ValidIdentifiers ?? new List<Identifier>();
 
             // Some identifier collections define a set of bitfields which can be
             // combined to represent a collection of states rather than a single value
@@ -420,6 +427,9 @@ namespace PQDIFExplorer
             // Set the icon used by the main window
             Icon = new Icon(typeof(MainWindow), "Icons.explorer.ico");
 
+            // Set the GPA Lock icon in the upper right corner
+            GPALockButton.Image = Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.gpalock.png"));
+
             // Create the list of images to be displayed in the tree view
             RecordTree.ImageList = new ImageList();
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.default.png")));
@@ -446,6 +456,54 @@ namespace PQDIFExplorer
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                     OpenFile(openFileDialog.FileName);
+            }
+        }
+
+        // Handler called when user selects the option to open in PQDiffractor.
+        private void PQDiffractorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Set up the collection of paths to be searched for PQDiffractor.exe.
+            // This prefers the path from the configuration file, but will also search
+            // "Program Files" and "Program Files(x86)" in the default install location
+            string[] paths =
+            {
+                Settings.Default.PQDiffractorPath,
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "PQDiffractor", "PQDiffractor.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "PQDiffractor", "PQDiffractor.exe")
+            };
+
+            bool pqdiffractorNotFound = true;
+
+            foreach (string path in paths)
+            {
+                try
+                {
+                    // Attempt to run PQDiffractor using the current path
+                    using (Process.Start(path, m_filePath.QuoteWrap()))
+                    {
+                    }
+
+                    // If it works okay, set this flag to false
+                    pqdiffractorNotFound = false;
+
+                    // If the file was found,
+                    // no need to try any more paths
+                    break;
+                }
+                catch
+                {
+                    // Ignore the exception and try the next path
+                }
+            }
+
+            // If the file was not found,
+            // display the PQDiffractorNotFoundWindow to the user
+            if (pqdiffractorNotFound)
+            {
+                using (PQDiffractorNotFoundWindow window = new PQDiffractorNotFoundWindow())
+                {
+                    window.ShowDialog();
+                }
             }
         }
 
@@ -542,6 +600,14 @@ namespace PQDIFExplorer
         {
             if (IsHandleCreated)
                 BeginInvoke(new Action(FixScrollBars));
+        }
+
+        // Handler called when the user clicks on the GPA lock logo.
+        private void GPALockButton_Click(object sender, EventArgs e)
+        {
+            using (Process.Start("http://www.gridprotectionalliance.org/"))
+            {
+            }
         }
 
         // Handler called when the user selects the Exit button in the toolbar menu.

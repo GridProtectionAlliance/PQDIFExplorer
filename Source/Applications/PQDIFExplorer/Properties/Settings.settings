@@ -5,5 +5,8 @@
     <Setting Name="WindowSize" Type="System.Drawing.Size" Scope="User">
       <Value Profile="(Default)">900, 650</Value>
     </Setting>
+    <Setting Name="PQDiffractorPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">PQDiffractor.exe</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
