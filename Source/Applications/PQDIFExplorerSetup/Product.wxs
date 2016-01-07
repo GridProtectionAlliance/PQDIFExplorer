@@ -24,6 +24,12 @@
 
     <Icon Id="PQDIFExplorer.ico.exe" SourceFile="$(var.PQDIFExplorer.TargetPath)" />
 
+    <!-- Define Variables Related to .pqd File Association -->
+    <?define ApplicationName = "PQDIF Explorer" ?>
+    <?define ApplicationDescription = "Visualization tool for viewing raw data stored in PQDIF files." ?>
+    <?define PQDDescription = "Power Quality Data Interchange Format" ?>
+    <?define PQDExplorerMenu = "Open with PQDIF Explorer" ?>
+
     <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)\PQDIFExplorerSetupBanner.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)\PQDIFExplorerSetupDialog.bmp" />
     <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)\INSTALL_LICENSE.rtf" />
@@ -59,6 +65,33 @@
       <Component Id="PQDIFExplorer.exe">
         <File Id="PQDIFExplorer.exe" Name="$(var.PQDIFExplorer.TargetFileName)" Source="$(var.PQDIFExplorer.TargetPath)" />
         <Shortcut Id="PQDIFExplorerStartMenuShortcut" Name="PQDIF Explorer" Icon="PQDIFExplorer.ico.exe" Description="Visualization tool for viewing raw data from PQDIF files." WorkingDirectory="INSTALLFOLDER" Directory="ApplicationProgramsFolder" Advertise="yes" />
+
+        <!-- Capabilities keys for Vista/7/8 "Set Program Access and Defaults" -->
+        <RegistryValue Root="HKLM" Key="SOFTWARE\PQDIFExplorer\Capabilities" Name="ApplicationDescription" Value="$(var.ApplicationDescription)" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\PQDIFExplorer\Capabilities" Name="ApplicationIcon" Value="[APPLICATIONFOLDER]PQDIFExplorer.exe,0" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\PQDIFExplorer\Capabilities" Name="ApplicationName" Value="$(var.ApplicationName)" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\PQDIFExplorer\Capabilities\DefaultIcon" Value="[APPLICATIONFOLDER]PQDIFExplorer.exe,0" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\PQDIFExplorer\Capabilities\FileAssociations" Name=".pqd" Value="PQDIFExplorer.Document" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\PQDIFExplorer\Capabilities\MIMEAssociations" Name="application/pqd" Value="PQDIFExplorer.Document" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\PQDIFExplorer\Capabilities\shell\Open\command" Value="&quot;[APPLICATIONFOLDER]PQDIFExplorer.exe&quot; &quot;%1&quot;" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\RegisteredApplications" Name="PQDIFExplorer" Value="SOFTWARE\PQDIFExplorer\Capabilities" Type="string" />
+
+        <!-- App Paths to support Start,Run -> "PQDIFExplorer" -->
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\PQDIFExplorer.exe" Value="[!PQDIFExplorer.exe]" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\PQDIFExplorer.exe" Name="Path" Value="[APPLICATIONFOLDER]" Type="string" />
+
+        <!-- Extend to the "open with" list + Win7 jump menu pinning  -->
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Classes\Applications\PQDIFExplorer.exe\SupportedTypes" Name=".pqd" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Classes\Applications\PQDIFExplorer.exe\shell\open" Name="FriendlyAppName" Value="$(var.ApplicationName)" Type="string" />
+
+        <!-- PQDIFExplorer.Document ProgID -->
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Classes\PQDIFExplorer.Document" Name="FriendlyTypeName" Value="$(var.PQDDescription)" Type="string" />
+        <ProgId Id="PQDIFExplorer.Document" Description="$(var.PQDDescription)" Icon="PQDIFExplorer.ico.exe" Advertise="yes">
+          <Extension Id="pqd">
+            <Verb Id="open" Command="$(var.PQDExplorerMenu)" Argument="&quot;%1&quot;" />
+            <MIME Advertise="yes" ContentType="application/pqd" Default="yes" />
+          </Extension>
+        </ProgId>
       </Component>
       <Component Id="PQDIFExplorer.exe.config">
         <File Id="PQDIFExplorer.exe.config" Name="$(var.PQDIFExplorer.TargetFileName).config" Source="$(var.PQDIFExplorer.TargetPath).config" />
@@ -79,14 +112,6 @@
       </Component>
       
       <!-- External Dependencies -->
-      <!--
-      <Component Id="Antlr3.Runtime.dll">
-        <File Id="Antlr3.Runtime.dll" Name="Antlr3.Runtime.dll" Source="$(var.PQDIFExplorer.TargetDir)\Antlr3.Runtime.dll" />
-      </Component>
-      <Component Id="ExpressionEvaluator.dll">
-        <File Id="ExpressionEvaluator.dll" Name="ExpressionEvaluator.dll" Source="$(var.PQDIFExplorer.TargetDir)\ExpressionEvaluator.dll" />
-      </Component>
-      -->
       <Component Id="Ionic.Zlib.dll">
         <File Id="Ionic.Zlib.dll" Name="Ionic.Zlib.dll" Source="$(var.PQDIFExplorer.TargetDir)\Ionic.Zlib.dll" />
       </Component>

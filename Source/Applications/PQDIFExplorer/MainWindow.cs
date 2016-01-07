@@ -25,17 +25,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using GSF;
+using GSF.IO;
 using GSF.PQDIF;
 using GSF.PQDIF.Logical;
 using GSF.PQDIF.Physical;
-using Microsoft.Win32;
 using PQDIFExplorer.Properties;
 
 namespace PQDIFExplorer
@@ -90,6 +88,7 @@ namespace PQDIFExplorer
                 }
             }
 
+            Text = $"PQDIFExplorer - [{filePath}]";
             m_filePath = filePath;
         }
 
@@ -422,7 +421,14 @@ namespace PQDIFExplorer
         // Handler called when the window loads.
         private void MainWindow_Load(object sender, EventArgs e)
         {
+            string[] args;
+            string file;
+
             m_detailsWindows = new List<DetailsWindow>();
+
+            // Set the working directory to the executable's directory
+            // so that the PQDIF library can locate TagDefinitions.xml
+            Directory.SetCurrentDirectory(FilePath.GetAbsolutePath(""));
 
             // Set the icon used by the main window
             Icon = new Icon(typeof(MainWindow), "Icons.explorer.ico");
@@ -444,6 +450,12 @@ namespace PQDIFExplorer
             // Set initial size of the form
             if (Settings.Default.WindowSize != null)
                 Size = Settings.Default.WindowSize;
+
+            args = Environment.GetCommandLineArgs();
+            file = args.FirstOrDefault(arg => arg.EndsWith(".pqd", StringComparison.OrdinalIgnoreCase));
+
+            if ((object)file != null)
+                OpenFile(file);
         }
 
         // Handler called when the user selects the option to open a PQDIF file.
@@ -457,6 +469,25 @@ namespace PQDIFExplorer
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                     OpenFile(openFileDialog.FileName);
             }
+        }
+
+        // Handler called when the user drags files onto the window.
+        private void MainWindow_DragEnter(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+            if (files.Any(file => file.EndsWith(".pqd", StringComparison.OrdinalIgnoreCase)))
+                e.Effect = DragDropEffects.Copy;
+        }
+
+        // Handler called when the user drags and drops files onto the window.
+        private void MainWindow_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            string file = files.FirstOrDefault(f => f.EndsWith(".pqd", StringComparison.OrdinalIgnoreCase));
+
+            if ((object)file != null)
+                OpenFile(file);
         }
 
         // Handler called when user selects the option to open in PQDiffractor.
