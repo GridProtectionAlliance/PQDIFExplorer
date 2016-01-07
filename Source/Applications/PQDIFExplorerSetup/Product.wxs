@@ -1,30 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" Name="PQDIFExplorerSetup" Language="1033" Version="1.0.0.0" Manufacturer="" UpgradeCode="b7cd2807-fa1b-41d4-bceb-6438a86338e5">
-		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Product Id="{D009B807-F043-428E-8CE5-BFB08E120ABB}" Name="PQDIF Explorer" Language="1033" Version="!(bind.FileVersion.PQDIFExplorer.exe)" Manufacturer="Grid Protection Alliance" UpgradeCode="{853D8F23-C121-4412-A19D-9F4B173BEE77}">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
-		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
-		<MediaTemplate />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
 
-		<Feature Id="ProductFeature" Title="PQDIFExplorerSetup" Level="1">
-			<ComponentGroupRef Id="ProductComponents" />
-		</Feature>
-	</Product>
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_46_OR_LATER_INSTALLED"/>
+    <Condition Message='This setup requires Microsoft .NET Framework 4.6 or greater - this will need to be installed before installation can continue.'>
+      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_46_OR_LATER_INSTALLED]]>
+    </Condition>
 
-	<Fragment>
-		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="ProgramFilesFolder">
-				<Directory Id="INSTALLFOLDER" Name="PQDIFExplorerSetup" />
-			</Directory>
-		</Directory>
-	</Fragment>
+    <Feature Id="PQDIFExplorer" Title="PQDIF Explorer" Level="1" ConfigurableDirectory="INSTALLFOLDER" AllowAdvertise="no" Description="Installs the PQDIF Explorer.">
+      <ComponentGroupRef Id="PQDIFExplorerComponents" />
+    </Feature>
 
-	<Fragment>
-		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
-			<!-- <Component Id="ProductComponent"> -->
-				<!-- TODO: Insert files, registry keys, and other resources here. -->
-			<!-- </Component> -->
-		</ComponentGroup>
-	</Fragment>
+    <UI>
+      <!-- User Interface -->
+      <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+      <UIRef Id="WixUI_InstallDir" />
+      <UIRef Id="WixUI_ErrorProgressText" />
+    </UI>
+
+    <Icon Id="PQDIFExplorer.ico.exe" SourceFile="$(var.PQDIFExplorer.TargetPath)" />
+
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)\PQDIFExplorerSetupBanner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)\PQDIFExplorerSetupDialog.bmp" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)\INSTALL_LICENSE.rtf" />
+
+    <!-- Add/Remove Programs Properties -->
+    <Property Id="ARPPRODUCTICON" Value="PQDIFExplorer.ico.exe" />
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <?if $(var.Platform) = x64 ?>
+      <Directory Id="ProgramFiles64Folder">
+        <!-- C:\Program Files\PQDIFExplorer -->
+        <Directory Id="INSTALLFOLDER" Name="PQDIFExplorer" />
+      </Directory>
+      <?else ?>
+      <Directory Id="ProgramFilesFolder">
+        <!-- C:\Program Files (x86)\PQDIFExplorer -->
+        <Directory Id="INSTALLFOLDER" Name="PQDIFExplorer" />
+      </Directory>
+      <?endif ?>
+
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="PQDIF Explorer" />
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <!-- Console Components -->
+    <ComponentGroup Id="PQDIFExplorerComponents" Directory="INSTALLFOLDER">
+      <!-- PQDIFExplorer.exe -->
+      <Component Id="PQDIFExplorer.exe">
+        <File Id="PQDIFExplorer.exe" Name="$(var.PQDIFExplorer.TargetFileName)" Source="$(var.PQDIFExplorer.TargetPath)" />
+        <Shortcut Id="PQDIFExplorerStartMenuShortcut" Name="PQDIF Explorer" Icon="PQDIFExplorer.ico.exe" Description="Visualization tool for viewing raw data from PQDIF files." WorkingDirectory="INSTALLFOLDER" Directory="ApplicationProgramsFolder" Advertise="yes" />
+      </Component>
+      <Component Id="PQDIFExplorer.exe.config">
+        <File Id="PQDIFExplorer.exe.config" Name="$(var.PQDIFExplorer.TargetFileName).config" Source="$(var.PQDIFExplorer.TargetPath).config" />
+      </Component>
+
+      <!-- GSF Dependencies -->
+      <Component Id="GSF.Core.dll">
+        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.PQDIFExplorer.TargetDir)\GSF.Core.dll" />
+      </Component>
+      <Component Id="GSF.PQDIF.dll">
+        <File Id="GSF.PQDIF.dll" Name="GSF.PQDIF.dll" Source="$(var.PQDIFExplorer.TargetDir)\GSF.PQDIF.dll" />
+      </Component>
+      <Component Id="GSF.Core.xml">
+        <File Id="GSF.Core.xml" Name="GSF.Core.xml" Source="$(var.PQDIFExplorer.TargetDir)\GSF.Core.xml" />
+      </Component>
+      <Component Id="GSF.PQDIF.xml">
+        <File Id="GSF.PQDIF.xml" Name="GSF.PQDIF.xml" Source="$(var.PQDIFExplorer.TargetDir)\GSF.PQDIF.xml" />
+      </Component>
+      
+      <!-- External Dependencies -->
+      <!--
+      <Component Id="Antlr3.Runtime.dll">
+        <File Id="Antlr3.Runtime.dll" Name="Antlr3.Runtime.dll" Source="$(var.PQDIFExplorer.TargetDir)\Antlr3.Runtime.dll" />
+      </Component>
+      <Component Id="ExpressionEvaluator.dll">
+        <File Id="ExpressionEvaluator.dll" Name="ExpressionEvaluator.dll" Source="$(var.PQDIFExplorer.TargetDir)\ExpressionEvaluator.dll" />
+      </Component>
+      -->
+      <Component Id="Ionic.Zlib.dll">
+        <File Id="Ionic.Zlib.dll" Name="Ionic.Zlib.dll" Source="$(var.PQDIFExplorer.TargetDir)\Ionic.Zlib.dll" />
+      </Component>
+      
+      <!-- Tag Definitions XML -->
+      <Component Id="TagDefinitions.xml">
+        <File Id="TagDefinitions.xml" Name="TagDefinitions.xml" Source="$(var.PQDIFExplorer.TargetDir)\TagDefinitions.xml" />
+      </Component>
+
+      <!-- Cleanup -->
+      <Component Id="Cleanup" Guid="{4DB7FFF6-52ED-4D56-8F3A-3F22369536FD}">
+        <CreateFolder />
+        <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
 </Wix>
