@@ -159,6 +159,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Icons\gpalock.png" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SplashScreen.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\Dependencies\NuGet\GSF.PQDIF.2.1.157-beta\build\GSF.PQDIF.targets" Condition="Exists('..\..\Dependencies\NuGet\GSF.PQDIF.2.1.157-beta\build\GSF.PQDIF.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

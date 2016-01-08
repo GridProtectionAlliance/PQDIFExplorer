@@ -89,6 +89,7 @@ namespace PQDIFExplorer
             }
 
             Text = $"PQDIFExplorer - [{filePath}]";
+            DetailsTextBox.Text = string.Empty;
             m_filePath = filePath;
         }
 
@@ -436,6 +437,9 @@ namespace PQDIFExplorer
             // Set the GPA Lock icon in the upper right corner
             GPALockButton.Image = Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.gpalock.png"));
 
+            // Set splash screen label image
+            SplashScreenLabel.Image = Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.SplashScreen.png"));
+
             // Create the list of images to be displayed in the tree view
             RecordTree.ImageList = new ImageList();
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.default.png")));
@@ -623,6 +627,7 @@ namespace PQDIFExplorer
         // Handler called when the text is changed in the details text box.
         private void DetailsTextBox_TextChanged(object sender, EventArgs e)
         {
+            SplashScreenLabel.Visible = string.IsNullOrEmpty(DetailsTextBox.Text);
             FixScrollBars();
         }
 

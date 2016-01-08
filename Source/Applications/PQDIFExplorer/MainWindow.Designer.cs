@@ -39,6 +39,7 @@
             this.MenuBar = new System.Windows.Forms.MenuStrip();
             this.TopPanel = new System.Windows.Forms.Panel();
             this.GPALockButton = new System.Windows.Forms.Button();
+            this.SplashScreenLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer)).BeginInit();
             this.SplitContainer.Panel1.SuspendLayout();
             this.SplitContainer.Panel2.SuspendLayout();
@@ -85,6 +86,7 @@
             // 
             // SplitContainer.Panel2
             // 
+            this.SplitContainer.Panel2.Controls.Add(this.SplashScreenLabel);
             this.SplitContainer.Panel2.Controls.Add(this.DetailsTextBox);
             this.SplitContainer.Size = new System.Drawing.Size(864, 567);
             this.SplitContainer.SplitterDistance = 288;
@@ -164,6 +166,14 @@
             this.GPALockButton.UseVisualStyleBackColor = true;
             this.GPALockButton.Click += new System.EventHandler(this.GPALockButton_Click);
             // 
+            // SplashScreenLabel
+            // 
+            this.SplashScreenLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.SplashScreenLabel.Location = new System.Drawing.Point(0, 0);
+            this.SplashScreenLabel.Name = "SplashScreenLabel";
+            this.SplashScreenLabel.Size = new System.Drawing.Size(572, 567);
+            this.SplashScreenLabel.TabIndex = 3;
+            // 
             // MainWindow
             // 
             this.AllowDrop = true;
@@ -206,6 +216,7 @@
         private System.Windows.Forms.MenuStrip MenuBar;
         private System.Windows.Forms.Panel TopPanel;
         private System.Windows.Forms.Button GPALockButton;
+        private System.Windows.Forms.Label SplashScreenLabel;
     }
 }
 
