@@ -31,15 +31,17 @@
             this.RecordTree = new System.Windows.Forms.TreeView();
             this.DetailsTextBox = new System.Windows.Forms.TextBox();
             this.SplitContainer = new System.Windows.Forms.SplitContainer();
+            this.SplashScreenLabel = new System.Windows.Forms.Label();
             this.RootPanel = new System.Windows.Forms.Panel();
             this.FileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.OpenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveAltSToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ExitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PQDiffractorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuBar = new System.Windows.Forms.MenuStrip();
             this.TopPanel = new System.Windows.Forms.Panel();
             this.GPALockButton = new System.Windows.Forms.Button();
-            this.SplashScreenLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer)).BeginInit();
             this.SplitContainer.Panel1.SuspendLayout();
             this.SplitContainer.Panel2.SuspendLayout();
@@ -92,6 +94,14 @@
             this.SplitContainer.SplitterDistance = 288;
             this.SplitContainer.TabIndex = 0;
             // 
+            // SplashScreenLabel
+            // 
+            this.SplashScreenLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.SplashScreenLabel.Location = new System.Drawing.Point(0, 0);
+            this.SplashScreenLabel.Name = "SplashScreenLabel";
+            this.SplashScreenLabel.Size = new System.Drawing.Size(572, 567);
+            this.SplashScreenLabel.TabIndex = 3;
+            // 
             // RootPanel
             // 
             this.RootPanel.Controls.Add(this.SplitContainer);
@@ -106,6 +116,8 @@
             // 
             this.FileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.OpenToolStripMenuItem,
+            this.saveAltSToolStripMenuItem,
+            this.saveAsToolStripMenuItem,
             this.ExitToolStripMenuItem});
             this.FileToolStripMenuItem.Name = "FileToolStripMenuItem";
             this.FileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -115,15 +127,33 @@
             // 
             this.OpenToolStripMenuItem.Name = "OpenToolStripMenuItem";
             this.OpenToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.OpenToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.OpenToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.OpenToolStripMenuItem.Text = "Open...";
             this.OpenToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
+            // 
+            // saveAltSToolStripMenuItem
+            // 
+            this.saveAltSToolStripMenuItem.Name = "saveAltSToolStripMenuItem";
+            this.saveAltSToolStripMenuItem.ShortcutKeyDisplayString = "";
+            this.saveAltSToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
+            this.saveAltSToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.saveAltSToolStripMenuItem.Text = "Save";
+            this.saveAltSToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+            // 
+            // saveAsToolStripMenuItem
+            // 
+            this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+            this.saveAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            | System.Windows.Forms.Keys.S)));
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.saveAsToolStripMenuItem.Text = "Save As ";
+            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
             // ExitToolStripMenuItem
             // 
             this.ExitToolStripMenuItem.Name = "ExitToolStripMenuItem";
             this.ExitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.ExitToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.ExitToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.ExitToolStripMenuItem.Text = "Exit";
             this.ExitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItem_Click);
             // 
@@ -165,14 +195,6 @@
             this.GPALockButton.TabIndex = 1;
             this.GPALockButton.UseVisualStyleBackColor = true;
             this.GPALockButton.Click += new System.EventHandler(this.GPALockButton_Click);
-            // 
-            // SplashScreenLabel
-            // 
-            this.SplashScreenLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.SplashScreenLabel.Location = new System.Drawing.Point(0, 0);
-            this.SplashScreenLabel.Name = "SplashScreenLabel";
-            this.SplashScreenLabel.Size = new System.Drawing.Size(572, 567);
-            this.SplashScreenLabel.TabIndex = 3;
             // 
             // MainWindow
             // 
@@ -217,6 +239,8 @@
         private System.Windows.Forms.Panel TopPanel;
         private System.Windows.Forms.Button GPALockButton;
         private System.Windows.Forms.Label SplashScreenLabel;
+        private System.Windows.Forms.ToolStripMenuItem saveAltSToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveAsToolStripMenuItem;
     }
 }
 

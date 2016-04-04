@@ -72,7 +72,7 @@ namespace PQDIFExplorer
                 {
                     // Parse the next record
                     record = parser.NextRecord();
-
+                    
                     // The compression algorithm and compression style are necessary for properly parsing the file
                     // and must be obtained by parsing the logical structure of the container record
                     if (record.Header.TypeOfRecord == RecordType.Container)
@@ -91,6 +91,39 @@ namespace PQDIFExplorer
             Text = $"PQDIFExplorer - [{filePath}]";
             DetailsTextBox.Text = string.Empty;
             m_filePath = filePath;
+        }
+
+        // Opens the given file for exploration.
+        private void SaveFile(string filePath)
+        {
+            using (PhysicalWriter physicalWriter = new PhysicalWriter(filePath))
+            {
+
+                foreach (TreeNode treeNode in RecordTree.Nodes)
+                {
+
+                    Record r = (Record) treeNode.Tag;
+                    
+                    if (treeNode.NextNode == null)
+                        physicalWriter.WriteRecord((Record) treeNode.Tag, true);
+                    else
+                        physicalWriter.WriteRecord((Record) treeNode.Tag);
+
+                    if (r.Header.TypeOfRecord == RecordType.Container)
+                    {
+                        ContainerRecord containerRecord = ContainerRecord.CreateContainerRecord(r);
+                        physicalWriter.CompressionAlgorithm = containerRecord.CompressionAlgorithm;
+                        physicalWriter.CompressionStyle = containerRecord.CompressionStyle;
+                    }
+
+                    //File.AppendAllText("log2.txt", treeNode.Tag.ToString());
+                }
+            }
+
+            Text = $"PQDIFExplorer - [{filePath}]";
+            DetailsTextBox.Text = string.Empty;
+            m_filePath = filePath;
+
         }
 
         private TreeNode ToTreeNode(Record record)
@@ -667,6 +700,23 @@ namespace PQDIFExplorer
                 Settings.Default.WindowSize = RestoreBounds.Size;
 
             Settings.Default.Save();
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.DefaultExt = ".pqd";
+                saveFileDialog.Filter = "PQDIF Files|*.pqd|All Files|*.*";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    SaveFile(saveFileDialog.FileName);
+            }
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFile(m_filePath);
         }
     }
 }
