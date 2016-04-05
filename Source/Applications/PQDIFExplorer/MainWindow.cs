@@ -87,6 +87,8 @@ namespace PQDIFExplorer
                     RecordTree.Nodes.Add(ToTreeNode(record));
                 }
             }
+            saveAltSToolStripMenuItem.Enabled = true;
+            saveAsToolStripMenuItem.Enabled = true;
 
             Text = $"PQDIFExplorer - [{filePath}]";
             DetailsTextBox.Text = string.Empty;
