@@ -28,6 +28,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using GSF;
 using GSF.IO;
@@ -45,6 +46,7 @@ namespace PQDIFExplorer
     {
         private string m_filePath;
         private List<DetailsWindow> m_detailsWindows;
+        private TreeNode m_previouslySelectedNode;
 
         /// <summary>
         /// Creates a new instance of the <see cref="MainWindow"/> class.
@@ -59,6 +61,7 @@ namespace PQDIFExplorer
         {
             Record record;
             ContainerRecord containerRecord;
+            IEnumerable<List<TreeNode>> childNodes;
 
             // Clear out existing items in the tree view
             RecordTree.Nodes.Clear();
@@ -86,10 +89,30 @@ namespace PQDIFExplorer
                     // the tree view and add the node to the root level of the tree
                     RecordTree.Nodes.Add(ToTreeNode(record));
                 }
-            }
-            saveAltSToolStripMenuItem.Enabled = true;
-            saveAsToolStripMenuItem.Enabled = true;
 
+                // If the file has has more than one record with the same
+                // type, add an index to the nodes to aid navigation
+                childNodes = RecordTree.Nodes
+                    .Cast<TreeNode>()
+                    .GroupBy(node => ((Record)node.Tag).Header.TypeOfRecord)
+                    .Select(grouping => grouping.ToList())
+                    .Where(list => list.Count > 1);
+
+                foreach (List<TreeNode> list in childNodes)
+                {
+                    for (int i = 0; i < list.Count; i++)
+                        list[i].Text = $"[{i}] {list[i].Text}";
+                }
+            }
+
+            // Enable menu items that only work when a file is open
+            SaveToolStripMenuItem.Enabled = true;
+            SaveAsToolStripMenuItem.Enabled = true;
+            FindToolStripMenuItem.Enabled = true;
+            FindNextToolStripMenuItem.Enabled = true;
+            FindPreviousToolStripMenuItem.Enabled = true;
+
+            // Update the file path and window title
             Text = $"PQDIFExplorer - [{filePath}]";
             DetailsTextBox.Text = string.Empty;
             m_filePath = filePath;
@@ -100,16 +123,14 @@ namespace PQDIFExplorer
         {
             using (PhysicalWriter physicalWriter = new PhysicalWriter(filePath))
             {
-
                 foreach (TreeNode treeNode in RecordTree.Nodes)
                 {
-
-                    Record r = (Record) treeNode.Tag;
+                    Record r = (Record)treeNode.Tag;
                     
                     if (treeNode.NextNode == null)
-                        physicalWriter.WriteRecord((Record) treeNode.Tag, true);
+                        physicalWriter.WriteRecord((Record)treeNode.Tag, true);
                     else
-                        physicalWriter.WriteRecord((Record) treeNode.Tag);
+                        physicalWriter.WriteRecord((Record)treeNode.Tag);
 
                     if (r.Header.TypeOfRecord == RecordType.Container)
                     {
@@ -125,13 +146,21 @@ namespace PQDIFExplorer
             Text = $"PQDIFExplorer - [{filePath}]";
             DetailsTextBox.Text = string.Empty;
             m_filePath = filePath;
-
         }
 
         private TreeNode ToTreeNode(Record record)
         {
+            TreeNode node;
+
+            // If the record has a body, convert the
+            // collection element to a tree node and use that
+            if ((object)record.Body != null)
+                node = ToTreeNode(record.Body.Collection);
+            else
+                node = new TreeNode();
+
             // Use the type of the record to identify it in the tree view
-            TreeNode node = new TreeNode(record.Header.TypeOfRecord.ToString());
+            node.Text = record.Header.TypeOfRecord.ToString();
 
             // Set the tag of the node so that we can quickly associate
             // a selected node with the record that spawned it
@@ -160,14 +189,11 @@ namespace PQDIFExplorer
                     node.ImageIndex = 4;
                     node.SelectedImageIndex = 4;
                     break;
-            }
 
-            if ((object)record.Body != null)
-            {
-                // Convert each of the elements in the record body's
-                // collection into child nodes of the record's tree node
-                foreach (Element element in record.Body.Collection.Elements)
-                    node.Nodes.Add(ToTreeNode(element));
+                case RecordType.Blank:
+                    node.ImageIndex = 5;
+                    node.SelectedImageIndex = 5;
+                    break;
             }
 
             // Return the node that represents the record
@@ -195,19 +221,26 @@ namespace PQDIFExplorer
             switch (element.TypeOfElement)
             {
                 case ElementType.Collection:
-                    node.ImageIndex = 5;
-                    node.SelectedImageIndex = 5;
-                    break;
-
-                case ElementType.Vector:
                     node.ImageIndex = 6;
                     node.SelectedImageIndex = 6;
                     break;
 
-                case ElementType.Scalar:
+                case ElementType.Vector:
                     node.ImageIndex = 7;
                     node.SelectedImageIndex = 7;
                     break;
+
+                case ElementType.Scalar:
+                    node.ImageIndex = 8;
+                    node.SelectedImageIndex = 8;
+                    break;
+            }
+
+            // Use the blank image for blank elements
+            if ((object)tag != null && tag.StandardName == "tagBlank")
+            {
+                node.ImageIndex = 5;
+                node.SelectedImageIndex = 5;
             }
 
             // Set the tag of the node so that we can quickly associate
@@ -244,10 +277,106 @@ namespace PQDIFExplorer
             return node;
         }
 
+        // Finds the next node in the tree that matches the find text.
+        private void FindNext()
+        {
+            TreeNode startNode = RecordTree.SelectedNode ?? GetPreviousNode(RecordTree.Nodes[0]);
+            TreeNode node = startNode;
+            string findText = Regex.Escape(FindTextBox.Text);
+            bool found;
+
+            do
+            {
+                node = GetNextNode(node);
+                found = Regex.IsMatch(node.Text + GetDetails(node), findText, RegexOptions.IgnoreCase);
+            }
+            while (!ReferenceEquals(node, startNode) && !found);
+
+            if (found)
+                RecordTree.SelectedNode = node;
+        }
+
+        // Finds the prior node in the tree that matches the find text.
+        private void FindPrevious()
+        {
+            TreeNode startNode = RecordTree.SelectedNode ?? RecordTree.Nodes[0];
+            TreeNode node = startNode;
+            string findText = Regex.Escape(FindTextBox.Text);
+            bool found;
+
+            do
+            {
+                node = GetPreviousNode(node);
+                found = Regex.IsMatch(node.Text + GetDetails(node), findText, RegexOptions.IgnoreCase);
+            }
+            while (!ReferenceEquals(node, startNode) && !found);
+
+            if (found)
+                RecordTree.SelectedNode = node;
+        }
+
+        // Gets the next node after the given node in an inorder traversal of the tree.
+        private TreeNode GetNextNode(TreeNode currentNode)
+        {
+            // Next node is one of the following:
+            //   1. The first child node of the current node
+            //   2. If there are no child nodes, use the next sibling
+            //   3. If there is no next sibling, use the next sibling
+            //      of the nearest ancestor with a next sibling
+            //   4. If there is no such ancestor, use the first node in the tree
+            TreeNode nextNode = currentNode.FirstNode ?? currentNode.NextNode;
+
+            if ((object)nextNode == null)
+            {
+                nextNode = currentNode.Parent;
+
+                while ((object)nextNode != null && (object)nextNode.NextNode == null)
+                    nextNode = nextNode.Parent;
+
+                nextNode = nextNode?.NextNode ?? RecordTree.Nodes[0];
+            }
+
+            return nextNode;
+        }
+
+        // Gets the nearest node before the given node in an inorder traversal of the tree.
+        private TreeNode GetPreviousNode(TreeNode currentNode)
+        {
+            // Previous node is one of the following:
+            //   1. The last descendant node of the previous sibling
+            //   2. If there is no sibling node, use the parent node
+            //   3. If there is no parent node, use the last descendant node of the last node in the tree
+            TreeNode previousNode = currentNode.PrevNode ?? currentNode.Parent ?? RecordTree.Nodes[RecordTree.Nodes.Count - 1];
+
+            if (previousNode != currentNode.Parent)
+            {
+                while ((object)previousNode.LastNode != null)
+                    previousNode = previousNode.LastNode;
+            }
+
+            return previousNode;
+        }
+
+        // Gets detailed information about the object represented by the given node.
+        private string GetDetails(TreeNode node)
+        {
+            Record record = node.Tag as Record;
+            Element element = node.Tag as Element;
+
+            if ((object)record != null)
+                return GetDetails(record);
+
+            if ((object)element != null)
+                return GetDetails(element);
+
+            return null;
+        }
+
         // Gets detailed information about the given record.
         private string GetDetails(Record record)
         {
             StringBuilder details = new StringBuilder();
+            Tag tag;
 
             // Display the fields in the record's header
             details.AppendLine($"  Signature: {record.Header.RecordSignature}");
@@ -255,6 +384,20 @@ namespace PQDIFExplorer
             details.AppendLine($"Header Size: {record.Header.HeaderSize}");
             details.AppendLine($"  Body Size: {record.Header.BodySize}");
             details.AppendLine($"   Checksum: {record.Header.Checksum}");
+
+            // Look up the element's tag to display detailed information about the element as defined
+            // by its tag as well as the expected type of the element and its value based on the tag
+            tag = GSF.PQDIF.Tag.GetTag(record.Header.RecordTypeTag);
+
+            if ((object)tag != null)
+            {
+                details.AppendLine();
+                details.AppendLine($"-- Tag details --");
+                details.AppendLine($"           Name: {tag.Name}");
+                details.AppendLine($"  Standard Name: {tag.StandardName}");
+                details.AppendLine($"    Description: {tag.Description}");
+                details.AppendLine($"       Required: {(tag.Required ? "Yes" : "No")}");
+            }
 
             return details.ToString();
         }
@@ -482,6 +625,7 @@ namespace PQDIFExplorer
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.datasource.png")));
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.monitorsettings.png")));
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.observation.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.blank.png")));
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.collection.png")));
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.vector.png")));
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.scalar.png")));
@@ -580,26 +724,27 @@ namespace PQDIFExplorer
         // Handler called after the user selects a node in the tree view.
         private void RecordTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            object tag;
-            Record record;
-            Element element;
-
             string details;
+
+            if ((object)m_previouslySelectedNode != null)
+            {
+                m_previouslySelectedNode.BackColor = Color.Empty;
+                m_previouslySelectedNode.ForeColor = Color.Empty;
+            }
+
+            m_previouslySelectedNode = e.Node;
 
             if ((object)e.Node == null)
                 return;
 
-            tag = e.Node.Tag;
-            record = tag as Record;
-            element = tag as Element;
+            e.Node.BackColor = SystemColors.Highlight;
+            e.Node.ForeColor = SystemColors.HighlightText;
 
             // Get details about the record or
             // element selected in the tree view
-            if ((object)record != null)
-                details = GetDetails(record);
-            else if ((object)element != null)
-                details = GetDetails(element);
-            else
+            details = GetDetails(e.Node);
+
+            if ((object)details == null)
                 return;
 
             // Updates the details text box with
@@ -612,11 +757,6 @@ namespace PQDIFExplorer
         private void RecordTree_MouseDown(object sender, MouseEventArgs e)
         {
             TreeNode node;
-
-            object tag;
-            Record record;
-            Element element;
-
             string details;
             
             // Only handle mouse down events here if the user
@@ -630,17 +770,11 @@ namespace PQDIFExplorer
             if ((object)node == null || !node.Bounds.Contains(RecordTree.PointToClient(MousePosition)))
                 return;
 
-            tag = node.Tag;
-            record = tag as Record;
-            element = tag as Element;
-
             // Get details about the record or
             // element the user double-clicked on
-            if ((object)record != null)
-                details = GetDetails(record);
-            else if ((object)element != null)
-                details = GetDetails(element);
-            else
+            details = GetDetails(node);
+
+            if ((object)details == null)
                 return;
 
             // Creates a new window in which to display the details
@@ -681,7 +815,7 @@ namespace PQDIFExplorer
             }
         }
 
-        // Handler called when the user selects the Exit button in the toolbar menu.
+        // Handler called when the user selects the Exit option in the toolbar menu.
         private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Close();
@@ -704,7 +838,14 @@ namespace PQDIFExplorer
             Settings.Default.Save();
         }
 
-        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        // Handler called when the user selects the Save option in the toolbar menu.
+        private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFile(m_filePath);
+        }
+
+        // Handler called when the user selects the Save As... option in the toolbar menu.
+        private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (SaveFileDialog saveFileDialog = new SaveFileDialog())
             {
@@ -716,9 +857,57 @@ namespace PQDIFExplorer
             }
         }
 
-        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        // Handler called when user selects the Find option in the toolbar menu.
+        private void FindToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveFile(m_filePath);
+            FindPanel.Visible = true;
+            FindTextBox.Focus();
+            FindTextBox.SelectAll();
+        }
+
+        // Handler called when the user types in the FindTextBox.
+        private void FindTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+                FindPanel.Visible = false;
+
+            if (sender == FindTextBox && e.KeyCode == Keys.Enter)
+            {
+                if (!e.Shift)
+                    FindNext();
+                else
+                    FindPrevious();
+            }
+        }
+
+        // Handler called when the user clicks on the Find Next button.
+        private void FindNextButton_Click(object sender, EventArgs e)
+        {
+            FindNext();
+        }
+
+        // Handler called when the user clicks on the Find Previous button.
+        private void FindPreviousButton_Click(object sender, EventArgs e)
+        {
+            FindPrevious();
+        }
+
+        // Handler called when the user clicks on the close button in the FindPanel.
+        private void FindPanelCloseButton_Click(object sender, EventArgs e)
+        {
+            FindPanel.Visible = false;
+        }
+
+        // Handler called when the user mouses over the close button in the FindPanel.
+        private void FindPanelCloseButton_MouseEnter(object sender, EventArgs e)
+        {
+            FindPanelCloseButton.Font = new Font(FindPanelCloseButton.Font, FontStyle.Underline);
+        }
+
+        // Handler called when the user's mouse is no longer over the close button in the FindPanel.
+        private void FindPanelCloseButton_MouseLeave(object sender, EventArgs e)
+        {
+            FindPanelCloseButton.Font = new Font(FindPanelCloseButton.Font, FontStyle.Regular);
         }
     }
 }

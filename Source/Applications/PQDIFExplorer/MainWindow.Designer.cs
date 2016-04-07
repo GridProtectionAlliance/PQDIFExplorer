@@ -28,20 +28,29 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.RecordTree = new System.Windows.Forms.TreeView();
             this.DetailsTextBox = new System.Windows.Forms.TextBox();
             this.SplitContainer = new System.Windows.Forms.SplitContainer();
+            this.RecordTree = new PQDIFExplorer.BufferedTreeView();
             this.SplashScreenLabel = new System.Windows.Forms.Label();
             this.RootPanel = new System.Windows.Forms.Panel();
             this.FileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.OpenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveAltSToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SaveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SaveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ExitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PQDiffractorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuBar = new System.Windows.Forms.MenuStrip();
+            this.SearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.FindToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.FindNextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.FindPreviousToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.TopPanel = new System.Windows.Forms.Panel();
             this.GPALockButton = new System.Windows.Forms.Button();
+            this.FindPanel = new System.Windows.Forms.Panel();
+            this.FindPanelCloseButton = new System.Windows.Forms.Label();
+            this.FindNextButton = new System.Windows.Forms.Button();
+            this.FindPreviousButton = new System.Windows.Forms.Button();
+            this.FindTextBox = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer)).BeginInit();
             this.SplitContainer.Panel1.SuspendLayout();
             this.SplitContainer.Panel2.SuspendLayout();
@@ -49,17 +58,8 @@
             this.RootPanel.SuspendLayout();
             this.MenuBar.SuspendLayout();
             this.TopPanel.SuspendLayout();
+            this.FindPanel.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // RecordTree
-            // 
-            this.RecordTree.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.RecordTree.Location = new System.Drawing.Point(0, 0);
-            this.RecordTree.Name = "RecordTree";
-            this.RecordTree.Size = new System.Drawing.Size(288, 567);
-            this.RecordTree.TabIndex = 1;
-            this.RecordTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.RecordTree_AfterSelect);
-            this.RecordTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.RecordTree_MouseDown);
             // 
             // DetailsTextBox
             // 
@@ -69,8 +69,8 @@
             this.DetailsTextBox.Multiline = true;
             this.DetailsTextBox.Name = "DetailsTextBox";
             this.DetailsTextBox.ReadOnly = true;
-            this.DetailsTextBox.Size = new System.Drawing.Size(572, 567);
-            this.DetailsTextBox.TabIndex = 2;
+            this.DetailsTextBox.Size = new System.Drawing.Size(572, 545);
+            this.DetailsTextBox.TabIndex = 1;
             this.DetailsTextBox.WordWrap = false;
             this.DetailsTextBox.TextChanged += new System.EventHandler(this.DetailsTextBox_TextChanged);
             this.DetailsTextBox.Resize += new System.EventHandler(this.DetailsTextBox_Resize);
@@ -90,34 +90,45 @@
             // 
             this.SplitContainer.Panel2.Controls.Add(this.SplashScreenLabel);
             this.SplitContainer.Panel2.Controls.Add(this.DetailsTextBox);
-            this.SplitContainer.Size = new System.Drawing.Size(864, 567);
+            this.SplitContainer.Size = new System.Drawing.Size(864, 545);
             this.SplitContainer.SplitterDistance = 288;
             this.SplitContainer.TabIndex = 0;
+            this.SplitContainer.TabStop = false;
+            // 
+            // RecordTree
+            // 
+            this.RecordTree.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.RecordTree.Location = new System.Drawing.Point(0, 0);
+            this.RecordTree.Name = "RecordTree";
+            this.RecordTree.Size = new System.Drawing.Size(288, 545);
+            this.RecordTree.TabIndex = 0;
+            this.RecordTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.RecordTree_AfterSelect);
+            this.RecordTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.RecordTree_MouseDown);
             // 
             // SplashScreenLabel
             // 
             this.SplashScreenLabel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.SplashScreenLabel.Location = new System.Drawing.Point(0, 0);
             this.SplashScreenLabel.Name = "SplashScreenLabel";
-            this.SplashScreenLabel.Size = new System.Drawing.Size(572, 567);
-            this.SplashScreenLabel.TabIndex = 3;
+            this.SplashScreenLabel.Size = new System.Drawing.Size(572, 545);
+            this.SplashScreenLabel.TabIndex = 0;
             // 
             // RootPanel
             // 
             this.RootPanel.Controls.Add(this.SplitContainer);
             this.RootPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.RootPanel.Location = new System.Drawing.Point(0, 24);
+            this.RootPanel.Location = new System.Drawing.Point(0, 46);
             this.RootPanel.Name = "RootPanel";
             this.RootPanel.Padding = new System.Windows.Forms.Padding(10);
-            this.RootPanel.Size = new System.Drawing.Size(884, 587);
+            this.RootPanel.Size = new System.Drawing.Size(884, 565);
             this.RootPanel.TabIndex = 0;
             // 
             // FileToolStripMenuItem
             // 
             this.FileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.OpenToolStripMenuItem,
-            this.saveAltSToolStripMenuItem,
-            this.saveAsToolStripMenuItem,
+            this.SaveToolStripMenuItem,
+            this.SaveAsToolStripMenuItem,
             this.ExitToolStripMenuItem});
             this.FileToolStripMenuItem.Name = "FileToolStripMenuItem";
             this.FileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -127,35 +138,35 @@
             // 
             this.OpenToolStripMenuItem.Name = "OpenToolStripMenuItem";
             this.OpenToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.OpenToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.OpenToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.OpenToolStripMenuItem.Text = "Open...";
             this.OpenToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
             // 
-            // saveAltSToolStripMenuItem
+            // SaveToolStripMenuItem
             // 
-            this.saveAltSToolStripMenuItem.Enabled = false;
-            this.saveAltSToolStripMenuItem.Name = "saveAltSToolStripMenuItem";
-            this.saveAltSToolStripMenuItem.ShortcutKeyDisplayString = "";
-            this.saveAltSToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveAltSToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
-            this.saveAltSToolStripMenuItem.Text = "Save";
-            this.saveAltSToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+            this.SaveToolStripMenuItem.Enabled = false;
+            this.SaveToolStripMenuItem.Name = "SaveToolStripMenuItem";
+            this.SaveToolStripMenuItem.ShortcutKeyDisplayString = "";
+            this.SaveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
+            this.SaveToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.SaveToolStripMenuItem.Text = "Save";
+            this.SaveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
-            // saveAsToolStripMenuItem
+            // SaveAsToolStripMenuItem
             // 
-            this.saveAsToolStripMenuItem.Enabled = false;
-            this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            this.SaveAsToolStripMenuItem.Enabled = false;
+            this.SaveAsToolStripMenuItem.Name = "SaveAsToolStripMenuItem";
+            this.SaveAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
             | System.Windows.Forms.Keys.S)));
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
-            this.saveAsToolStripMenuItem.Text = "Save As ";
-            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
+            this.SaveAsToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.SaveAsToolStripMenuItem.Text = "Save As...";
+            this.SaveAsToolStripMenuItem.Click += new System.EventHandler(this.SaveAsToolStripMenuItem_Click);
             // 
             // ExitToolStripMenuItem
             // 
             this.ExitToolStripMenuItem.Name = "ExitToolStripMenuItem";
             this.ExitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.ExitToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.ExitToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.ExitToolStripMenuItem.Text = "Exit";
             this.ExitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItem_Click);
             // 
@@ -170,12 +181,50 @@
             // 
             this.MenuBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.FileToolStripMenuItem,
+            this.SearchToolStripMenuItem,
             this.PQDiffractorToolStripMenuItem});
             this.MenuBar.Location = new System.Drawing.Point(0, 0);
             this.MenuBar.Name = "MenuBar";
             this.MenuBar.Size = new System.Drawing.Size(860, 24);
-            this.MenuBar.TabIndex = 0;
+            this.MenuBar.TabIndex = 1;
             this.MenuBar.Text = "MenuBar";
+            // 
+            // SearchToolStripMenuItem
+            // 
+            this.SearchToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.FindToolStripMenuItem,
+            this.FindNextToolStripMenuItem,
+            this.FindPreviousToolStripMenuItem});
+            this.SearchToolStripMenuItem.Name = "SearchToolStripMenuItem";
+            this.SearchToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
+            this.SearchToolStripMenuItem.Text = "Search";
+            // 
+            // FindToolStripMenuItem
+            // 
+            this.FindToolStripMenuItem.Enabled = false;
+            this.FindToolStripMenuItem.Name = "FindToolStripMenuItem";
+            this.FindToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F)));
+            this.FindToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
+            this.FindToolStripMenuItem.Text = "Find...";
+            this.FindToolStripMenuItem.Click += new System.EventHandler(this.FindToolStripMenuItem_Click);
+            // 
+            // FindNextToolStripMenuItem
+            // 
+            this.FindNextToolStripMenuItem.Enabled = false;
+            this.FindNextToolStripMenuItem.Name = "FindNextToolStripMenuItem";
+            this.FindNextToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F3;
+            this.FindNextToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
+            this.FindNextToolStripMenuItem.Text = "Find Next";
+            this.FindNextToolStripMenuItem.Click += new System.EventHandler(this.FindNextButton_Click);
+            // 
+            // FindPreviousToolStripMenuItem
+            // 
+            this.FindPreviousToolStripMenuItem.Enabled = false;
+            this.FindPreviousToolStripMenuItem.Name = "FindPreviousToolStripMenuItem";
+            this.FindPreviousToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.F3)));
+            this.FindPreviousToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
+            this.FindPreviousToolStripMenuItem.Text = "Find Previous";
+            this.FindPreviousToolStripMenuItem.Click += new System.EventHandler(this.FindPreviousButton_Click);
             // 
             // TopPanel
             // 
@@ -186,7 +235,7 @@
             this.TopPanel.Location = new System.Drawing.Point(0, 0);
             this.TopPanel.Name = "TopPanel";
             this.TopPanel.Size = new System.Drawing.Size(884, 24);
-            this.TopPanel.TabIndex = 1;
+            this.TopPanel.TabIndex = 0;
             // 
             // GPALockButton
             // 
@@ -198,6 +247,66 @@
             this.GPALockButton.UseVisualStyleBackColor = true;
             this.GPALockButton.Click += new System.EventHandler(this.GPALockButton_Click);
             // 
+            // FindPanel
+            // 
+            this.FindPanel.Controls.Add(this.FindPanelCloseButton);
+            this.FindPanel.Controls.Add(this.FindNextButton);
+            this.FindPanel.Controls.Add(this.FindPreviousButton);
+            this.FindPanel.Controls.Add(this.FindTextBox);
+            this.FindPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this.FindPanel.Location = new System.Drawing.Point(0, 24);
+            this.FindPanel.Name = "FindPanel";
+            this.FindPanel.Size = new System.Drawing.Size(884, 22);
+            this.FindPanel.TabIndex = 1;
+            this.FindPanel.Visible = false;
+            // 
+            // FindPanelCloseButton
+            // 
+            this.FindPanelCloseButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.FindPanelCloseButton.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.FindPanelCloseButton.Location = new System.Drawing.Point(863, 1);
+            this.FindPanelCloseButton.Name = "FindPanelCloseButton";
+            this.FindPanelCloseButton.Size = new System.Drawing.Size(20, 20);
+            this.FindPanelCloseButton.TabIndex = 3;
+            this.FindPanelCloseButton.Text = "x";
+            this.FindPanelCloseButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.FindPanelCloseButton.Click += new System.EventHandler(this.FindPanelCloseButton_Click);
+            this.FindPanelCloseButton.MouseEnter += new System.EventHandler(this.FindPanelCloseButton_MouseEnter);
+            this.FindPanelCloseButton.MouseLeave += new System.EventHandler(this.FindPanelCloseButton_MouseLeave);
+            // 
+            // FindNextButton
+            // 
+            this.FindNextButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.FindNextButton.Location = new System.Drawing.Point(844, 1);
+            this.FindNextButton.Name = "FindNextButton";
+            this.FindNextButton.Size = new System.Drawing.Size(20, 20);
+            this.FindNextButton.TabIndex = 2;
+            this.FindNextButton.Text = "˅";
+            this.FindNextButton.UseVisualStyleBackColor = true;
+            this.FindNextButton.Click += new System.EventHandler(this.FindNextButton_Click);
+            this.FindNextButton.KeyDown += new System.Windows.Forms.KeyEventHandler(this.FindTextBox_KeyDown);
+            // 
+            // FindPreviousButton
+            // 
+            this.FindPreviousButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.FindPreviousButton.Location = new System.Drawing.Point(825, 1);
+            this.FindPreviousButton.Name = "FindPreviousButton";
+            this.FindPreviousButton.Size = new System.Drawing.Size(20, 20);
+            this.FindPreviousButton.TabIndex = 1;
+            this.FindPreviousButton.Text = "˄";
+            this.FindPreviousButton.UseVisualStyleBackColor = true;
+            this.FindPreviousButton.Click += new System.EventHandler(this.FindPreviousButton_Click);
+            this.FindPreviousButton.KeyDown += new System.Windows.Forms.KeyEventHandler(this.FindTextBox_KeyDown);
+            // 
+            // FindTextBox
+            // 
+            this.FindTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.FindTextBox.Location = new System.Drawing.Point(601, 1);
+            this.FindTextBox.Name = "FindTextBox";
+            this.FindTextBox.Size = new System.Drawing.Size(224, 20);
+            this.FindTextBox.TabIndex = 0;
+            this.FindTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.FindTextBox_KeyDown);
+            // 
             // MainWindow
             // 
             this.AllowDrop = true;
@@ -205,6 +314,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(884, 611);
             this.Controls.Add(this.RootPanel);
+            this.Controls.Add(this.FindPanel);
             this.Controls.Add(this.TopPanel);
             this.MainMenuStrip = this.MenuBar;
             this.Name = "MainWindow";
@@ -223,13 +333,14 @@
             this.MenuBar.PerformLayout();
             this.TopPanel.ResumeLayout(false);
             this.TopPanel.PerformLayout();
+            this.FindPanel.ResumeLayout(false);
+            this.FindPanel.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-        private System.Windows.Forms.TreeView RecordTree;
         private System.Windows.Forms.TextBox DetailsTextBox;
         private System.Windows.Forms.SplitContainer SplitContainer;
         private System.Windows.Forms.Panel RootPanel;
@@ -241,8 +352,18 @@
         private System.Windows.Forms.Panel TopPanel;
         private System.Windows.Forms.Button GPALockButton;
         private System.Windows.Forms.Label SplashScreenLabel;
-        private System.Windows.Forms.ToolStripMenuItem saveAltSToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem saveAsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem SaveToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem SaveAsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem SearchToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem FindToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem FindNextToolStripMenuItem;
+        private System.Windows.Forms.Panel FindPanel;
+        private System.Windows.Forms.TextBox FindTextBox;
+        private System.Windows.Forms.Button FindNextButton;
+        private System.Windows.Forms.Button FindPreviousButton;
+        private System.Windows.Forms.ToolStripMenuItem FindPreviousToolStripMenuItem;
+        private System.Windows.Forms.Label FindPanelCloseButton;
+        private BufferedTreeView RecordTree;
     }
 }
 
