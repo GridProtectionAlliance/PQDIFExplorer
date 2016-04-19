@@ -480,7 +480,9 @@ namespace PQDIFExplorer
                 try
                 {
                     element.SetValue(value);
-                    DetailsTextBox.Text = GetDetails(element);
+
+                    if (RecordTree.SelectedNode.Tag == element)
+                        DetailsTextBox.Text = GetDetails(element);
 
                     if (!Text.EndsWith("*"))
                         Text += "*";
