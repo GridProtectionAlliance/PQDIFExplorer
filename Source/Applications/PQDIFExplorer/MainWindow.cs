@@ -435,32 +435,59 @@ namespace PQDIFExplorer
             return details.ToString();
         }
 
+        // Creates the context menu for the given tree node.
+        private void CreateContextMenu(TreeNode node)
+        {
+            ToolStripMenuItem menuItem;
+            Element element;
+
+            // Add a context menu if one does not already exist
+            if ((object)node == null || (object)node.ContextMenuStrip != null)
+                return;
+
+            node.ContextMenuStrip = new ContextMenuStrip();
+            element = node.Tag as Element;
+
+            if ((object)element != null && (element.TypeOfElement == ElementType.Scalar || element.TypeOfElement == ElementType.Vector))
+            {
+                menuItem = new ToolStripMenuItem("Edit Value");
+                menuItem.Click += (sender, args) => DisplayEditDialog(element);
+                node.ContextMenuStrip.Items.Add(menuItem);
+            }
+
+            menuItem = new ToolStripMenuItem("Open Details Window");
+            menuItem.Click += (sender, args) => DisplayDetailsWindow(GetDetails(node));
+            node.ContextMenuStrip.Items.Add(menuItem);
+        }
+
         // Displays the dialog used to edit a value.
         private void DisplayEditDialog(Element element)
         {
+            string value;
+
             using (EditDialog editDialog = new EditDialog())
             {
                 editDialog.Initialize(element);
 
-                if (editDialog.ShowDialog() == DialogResult.OK)
+                if (editDialog.ShowDialog() != DialogResult.OK)
+                    return;
+
+                value = editDialog.Value;
+
+                if ((object)value == null)
+                    return;
+
+                try
                 {
-                    string value = editDialog.Value;
+                    element.SetValue(value);
+                    DetailsTextBox.Text = GetDetails(element);
 
-                    if ((object)value != null)
-                    {
-                        try
-                        {
-                            element.SetValue(value);
-                            DetailsTextBox.Text = GetDetails(element);
-
-                            if (!Text.EndsWith("*"))
-                                Text += "*";
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"Error setting value of PQDIF element: {ex.Message}", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
+                    if (!Text.EndsWith("*"))
+                        Text += "*";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error setting value of PQDIF element: {ex.Message}", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -524,30 +551,11 @@ namespace PQDIFExplorer
         // Handles the case when the user right-clicks in the record tree.
         private void HandleRightClick()
         {
-            TreeNode node;
-            ToolStripMenuItem menuItem;
-            Element element;
-
             // Figure out which node the user right-clicked on
-            node = RecordTree.GetNodeAt(RecordTree.PointToClient(MousePosition));
+            TreeNode node = RecordTree.GetNodeAt(RecordTree.PointToClient(MousePosition));
 
             // Add a context menu if one does not already exist
-            if ((object)node == null || (object)node.ContextMenuStrip != null)
-                return;
-
-            node.ContextMenuStrip = new ContextMenuStrip();
-            element = node.Tag as Element;
-
-            if ((object)element != null && (element.TypeOfElement == ElementType.Scalar || element.TypeOfElement == ElementType.Vector))
-            {
-                menuItem = new ToolStripMenuItem("Edit Value");
-                menuItem.Click += (sender, args) => DisplayEditDialog(element);
-                node.ContextMenuStrip.Items.Add(menuItem);
-            }
-
-            menuItem = new ToolStripMenuItem("Open Details Window");
-            menuItem.Click += (sender, args) => DisplayDetailsWindow(GetDetails(node));
-            node.ContextMenuStrip.Items.Add(menuItem);
+            CreateContextMenu(node);
         }
 
         // Cancels the next expand or collapse operation in the tree view.
@@ -731,6 +739,18 @@ namespace PQDIFExplorer
                 HandleDoubleClick();
             else if (e.Button == MouseButtons.Right && e.Clicks == 1)
                 HandleRightClick();
+        }
+
+        // Handler called when the user uses the keyboard on the tree view.
+        private void RecordTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            TreeNode node = RecordTree.SelectedNode;
+
+            if (e.Shift && e.KeyCode == Keys.F10 && (object)node != null)
+            {
+                CreateContextMenu(node);
+                node.ContextMenuStrip.Show(RecordTree, node.Bounds.Location);
+            }
         }
 
         // Handler called when the text is changed in the details text box.
