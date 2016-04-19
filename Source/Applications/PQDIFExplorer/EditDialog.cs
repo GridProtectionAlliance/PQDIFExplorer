@@ -97,7 +97,7 @@ namespace PQDIFExplorer
                 ValueListBox.Focus();
 
                 // Populate the list box with the valid identifiers
-                foreach (Identifier identifier in identifiers)
+                foreach (Identifier identifier in identifiers.OrderBy(identifier => identifier.Name))
                 {
                     ValueListBox.Items.Add(identifier.Name);
 
