@@ -408,7 +408,8 @@ namespace PQDIFExplorer
             Tag tag;
 
             // Display the value if the element is a vector or a scalar
-            details.AppendLine($"        Value: {element.ValueAsString()}").AppendLine();
+            if (element.TypeOfElement != ElementType.Collection)
+                details.AppendLine($"        Value: {element.ValueAsString()}").AppendLine();
 
             // Display the tag of the element and the actual type of the
             // element and its value as defined by the data in the file
