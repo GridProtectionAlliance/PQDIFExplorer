@@ -448,11 +448,18 @@ namespace PQDIFExplorer
 
                     if ((object)value != null)
                     {
-                        element.SetValue(value);
-                        DetailsTextBox.Text = GetDetails(element);
+                        try
+                        {
+                            element.SetValue(value);
+                            DetailsTextBox.Text = GetDetails(element);
 
-                        if (!Text.EndsWith("*"))
-                            Text += "*";
+                            if (!Text.EndsWith("*"))
+                                Text += "*";
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Error setting value of PQDIF element: {ex.Message}", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }
