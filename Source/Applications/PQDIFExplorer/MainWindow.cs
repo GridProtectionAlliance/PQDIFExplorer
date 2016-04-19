@@ -144,7 +144,6 @@ namespace PQDIFExplorer
             }
 
             Text = $"PQDIFExplorer - [{filePath}]";
-            DetailsTextBox.Text = string.Empty;
             m_filePath = filePath;
         }
 
@@ -157,7 +156,7 @@ namespace PQDIFExplorer
             if ((object)record.Body != null)
                 node = ToTreeNode(record.Body.Collection);
             else
-                node = new TreeNode();
+                node = ToTreeNode(new CollectionElement());
 
             // Use the type of the record to identify it in the tree view
             node.Text = record.Header.TypeOfRecord.ToString();
@@ -409,10 +408,7 @@ namespace PQDIFExplorer
             Tag tag;
 
             // Display the value if the element is a vector or a scalar
-            if (element is ScalarElement)
-                details.AppendLine($"        Value: {ValueAsString((ScalarElement)element)}").AppendLine();
-            else if (element is VectorElement)
-                details.AppendLine($"        Value: {ValueAsString((VectorElement)element)}").AppendLine();
+            details.AppendLine($"        Value: {element.ValueAsString()}").AppendLine();
 
             // Display the tag of the element and the actual type of the
             // element and its value as defined by the data in the file
@@ -439,126 +435,37 @@ namespace PQDIFExplorer
             return details.ToString();
         }
 
-        // Converts the value of the given element to a string.
-        private string ValueAsString(ScalarElement element)
+        // Displays the dialog used to edit a value.
+        private void DisplayEditDialog(Element element)
         {
-            string identifierName;
-            string valueString;
-
-            object value;
-
-            Tag tag;
-            IReadOnlyCollection<Identifier> identifiers;
-            List<Identifier> bitFields;
-
-            uint bitSet;
-            List<string> setBits;
-
-            // Get the value of the element
-            // parsed from the PQDIF file
-            value = element.Get();
-
-            // Get the tag definition for the element being displayed
-            tag = GSF.PQDIF.Tag.GetTag(element.TagOfElement);
-
-            // Use the format string specified by the tag
-            // or a default format string if not specified
-            if (element.TypeOfValue == PhysicalType.Timestamp)
-                valueString = string.Format(tag?.FormatString ?? "{0:yyyy-MM-dd HH:mm:ss.fffffff}", value);
-            else
-                valueString = string.Format(tag?.FormatString ?? "{0}", value);
-
-            // Determine whether the tag definition contains
-            // a list of identifiers which can be used to
-            // display the value in a more readable format
-            identifiers = tag?.ValidIdentifiers ?? new List<Identifier>();
-
-            // Some identifier collections define a set of bitfields which can be
-            // combined to represent a collection of states rather than a single value
-            // and these are identified by the values being represented in hexadecimal
-            bitFields = identifiers.Where(id => id.Value.StartsWith("0x")).ToList();
-
-            if (bitFields.Count > 0)
+            using (EditDialog editDialog = new EditDialog())
             {
-                // If the value is not convertible,
-                // it cannot be converted to an
-                // integer to check for bit states
-                if (!(value is IConvertible))
-                    return valueString;
+                editDialog.Initialize(element);
 
-                // Convert the value to an integer which can
-                // then be checked for the state of its bits
-                bitSet = Convert.ToUInt32(value);
+                if (editDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string value = editDialog.Value;
 
-                // Get the names of the bitfields in the
-                // collection of bitfields that are set
-                setBits = bitFields
-                    .Select(id => new { Name = id.Name, Value = Convert.ToUInt32(id.Value, 16) })
-                    .Where(id => bitSet == id.Value || (bitSet & id.Value) > 0u)
-                    .Select(id => id.Name)
-                    .ToList();
+                    if ((object)value != null)
+                    {
+                        element.SetValue(value);
+                        DetailsTextBox.Text = GetDetails(element);
 
-                // If none of the bitfields are set,
-                // show just the value by itself
-                if (setBits.Count == 0)
-                    return valueString;
-
-                // If any of the bitfields are set,
-                // display them as a comma-separated
-                // list alongside the value
-                identifierName = string.Join(", ", setBits);
-
-                return $"{{ {identifierName} }} ({valueString})";
+                        if (!Text.EndsWith("*"))
+                            Text += "*";
+                    }
+                }
             }
-
-            // Determine if there are any identifiers whose value exactly
-            // matches the string representation of the element's value
-            identifierName = identifiers.SingleOrDefault(id => id.Value == valueString)?.Name;
-
-            if ((object)identifierName != null)
-                return $"{identifierName} ({element.Get()})";
-
-            // If the tag could not be recognized as
-            // one that can be displayed in a more
-            // readable form, display the value by itself
-            return valueString;
         }
 
-        // Converts the value of the given element to a string.
-        private string ValueAsString(VectorElement element)
+        // Displays the given details in its own details window.
+        private void DisplayDetailsWindow(string details)
         {
-            Tag tag;
-            IEnumerable<string> values;
-            string format;
-            string join;
-
-            // The physical types Char1 and Char2 indicate the value is a string
-            if (element.TypeOfValue == PhysicalType.Char1)
-                return Encoding.ASCII.GetString(element.GetValues()).Trim((char)0);
-
-            if (element.TypeOfValue == PhysicalType.Char2)
-                return Encoding.Unicode.GetString(element.GetValues()).Trim((char)0);
-
-            // Get the tag definition of the element being displayed
-            tag = GSF.PQDIF.Tag.GetTag(element.TagOfElement);
-
-            // Determine the format in which to display the values
-            // based on the tag definition and the type of the value
-            if (element.TypeOfValue == PhysicalType.Timestamp)
-                format = tag.FormatString ?? "{0:yyyy-MM-dd HH:mm:ss.fffffff}";
-            else
-                format = tag.FormatString ?? "{0}";
-
-            // Convert the values to their string representations
-            values = Enumerable.Range(0, element.Size)
-                .Select(index => string.Format(format, element.Get(index)));
-
-            // Join the values in the collection
-            // to a single, comma-separated string
-            join = string.Join(", ", values);
-
-            // Wrap the string in curly braces and return
-            return $"{{ {join} }}";
+            DetailsWindow detailsWindow = new DetailsWindow();
+            detailsWindow.SetText(details);
+            detailsWindow.Show();
+            detailsWindow.FormClosing += (obj, args) => m_detailsWindows.Remove(detailsWindow);
+            m_detailsWindows.Add(detailsWindow);
         }
 
         // Fixes the scroll bars in the details view
@@ -577,6 +484,63 @@ namespace PQDIFExplorer
                 DetailsTextBox.ScrollBars = ScrollBars.Horizontal;
             else
                 DetailsTextBox.ScrollBars = ScrollBars.None;
+        }
+
+        // Handles the case when the user double-clicks in the record tree.
+        private void HandleDoubleClick()
+        {
+            TreeNode node;
+            string details;
+
+            // Figure out which node the user double-clicked on
+            node = RecordTree.GetNodeAt(RecordTree.PointToClient(MousePosition));
+
+            if ((object)node == null || !node.Bounds.Contains(RecordTree.PointToClient(MousePosition)))
+                return;
+
+            // Get details about the record or
+            // element the user double-clicked on
+            details = GetDetails(node);
+
+            if ((object)details == null)
+                return;
+
+            // Creates a new window in which to display the details
+            BeginInvoke(new Action<string>(DisplayDetailsWindow), details);
+
+            // Cancel expand or collapse once to suppress the
+            // default behavior of expand/collapse on double-click
+            if (node.Nodes.Count > 0)
+                CancelExpandCollapseOnce();
+        }
+
+        // Handles the case when the user right-clicks in the record tree.
+        private void HandleRightClick()
+        {
+            TreeNode node;
+            ToolStripMenuItem menuItem;
+            Element element;
+
+            // Figure out which node the user right-clicked on
+            node = RecordTree.GetNodeAt(RecordTree.PointToClient(MousePosition));
+
+            // Add a context menu if one does not already exist
+            if ((object)node == null || (object)node.ContextMenuStrip != null)
+                return;
+
+            node.ContextMenuStrip = new ContextMenuStrip();
+            element = node.Tag as Element;
+
+            if ((object)element != null && (element.TypeOfElement == ElementType.Scalar || element.TypeOfElement == ElementType.Vector))
+            {
+                menuItem = new ToolStripMenuItem("Edit Value");
+                menuItem.Click += (sender, args) => DisplayEditDialog(element);
+                node.ContextMenuStrip.Items.Add(menuItem);
+            }
+
+            menuItem = new ToolStripMenuItem("Open Details Window");
+            menuItem.Click += (sender, args) => DisplayDetailsWindow(GetDetails(node));
+            node.ContextMenuStrip.Items.Add(menuItem);
         }
 
         // Cancels the next expand or collapse operation in the tree view.
@@ -756,41 +720,10 @@ namespace PQDIFExplorer
         // Handler called when the user clicks on the tree view.
         private void RecordTree_MouseDown(object sender, MouseEventArgs e)
         {
-            TreeNode node;
-            string details;
-            
-            // Only handle mouse down events here if the user
-            // double-clicks with the left mouse button
-            if (e.Button != MouseButtons.Left || e.Clicks != 2)
-                return;
-
-            // Figure out which node the user double-clicked on
-            node = RecordTree.GetNodeAt(RecordTree.PointToClient(MousePosition));
-
-            if ((object)node == null || !node.Bounds.Contains(RecordTree.PointToClient(MousePosition)))
-                return;
-
-            // Get details about the record or
-            // element the user double-clicked on
-            details = GetDetails(node);
-
-            if ((object)details == null)
-                return;
-
-            // Creates a new window in which to display the details
-            BeginInvoke(new Action(() =>
-            {
-                DetailsWindow detailsWindow = new DetailsWindow();
-                detailsWindow.SetText(details);
-                detailsWindow.Show();
-                detailsWindow.FormClosing += (obj, args) => m_detailsWindows.Remove(detailsWindow);
-                m_detailsWindows.Add(detailsWindow);
-            }));
-
-            // Cancel expand or collapse once to suppress the
-            // default behavior of expand/collapse on double-click
-            if (node.Nodes.Count > 0)
-                CancelExpandCollapseOnce();
+            if (e.Button == MouseButtons.Left && e.Clicks == 2)
+                HandleDoubleClick();
+            else if (e.Button == MouseButtons.Right && e.Clicks == 1)
+                HandleRightClick();
         }
 
         // Handler called when the text is changed in the details text box.
@@ -826,6 +759,20 @@ namespace PQDIFExplorer
         private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
             List<DetailsWindow> detailsWindows = new List<DetailsWindow>(m_detailsWindows);
+
+            if (Text.EndsWith("*"))
+            {
+                DialogResult result = MessageBox.Show("Do you want to save your changes?", "Save Changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                if (result == DialogResult.Yes)
+                    SaveFile(m_filePath);
+            }
 
             foreach (DetailsWindow detailsWindow in detailsWindows)
                 detailsWindow.Close();
