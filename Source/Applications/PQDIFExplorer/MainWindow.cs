@@ -63,6 +63,10 @@ namespace PQDIFExplorer
             ContainerRecord containerRecord;
             IEnumerable<List<TreeNode>> childNodes;
 
+            // Close existing details windows
+            foreach (DetailsWindow window in new List<DetailsWindow>(m_detailsWindows))
+                window.Close();
+
             // Clear out existing items in the tree view
             RecordTree.Nodes.Clear();
 
