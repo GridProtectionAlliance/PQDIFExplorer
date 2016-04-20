@@ -143,6 +143,14 @@ namespace PQDIFExplorer
                 }
             }
 
+            // Saving the file may modify the information in the header of the PQIDF records
+            // so update the details text box if the selected node represents a PQDIF record
+            Record record = RecordTree.SelectedNode?.Tag as Record;
+
+            if ((object)record != null)
+                DetailsTextBox.Text = GetDetails(record);
+            
+            // Update window title and file path
             Text = $"PQDIFExplorer - [{filePath}]";
             m_filePath = filePath;
         }
