@@ -149,7 +149,9 @@ namespace PQDIFExplorer
 
             if ((object)record != null)
                 DetailsTextBox.Text = GetDetails(record);
-            
+
+            UpdateDetailsWindows();
+
             // Update window title and file path
             Text = $"PQDIFExplorer - [{filePath}]";
             m_filePath = filePath;
@@ -465,7 +467,7 @@ namespace PQDIFExplorer
             }
 
             menuItem = new ToolStripMenuItem("Open Details Window");
-            menuItem.Click += (sender, args) => DisplayDetailsWindow(GetDetails(node));
+            menuItem.Click += (sender, args) => DisplayDetailsWindow(node);
             node.ContextMenuStrip.Items.Add(menuItem);
         }
 
@@ -493,6 +495,8 @@ namespace PQDIFExplorer
                     if (RecordTree.SelectedNode.Tag == element)
                         DetailsTextBox.Text = GetDetails(element);
 
+                    UpdateDetailsWindows();
+
                     if (!Text.EndsWith("*"))
                         Text += "*";
                 }
@@ -504,13 +508,20 @@ namespace PQDIFExplorer
         }
 
         // Displays the given details in its own details window.
-        private void DisplayDetailsWindow(string details)
+        private void DisplayDetailsWindow(TreeNode node)
         {
             DetailsWindow detailsWindow = new DetailsWindow();
-            detailsWindow.SetText(details);
+            detailsWindow.Node = node;
+            detailsWindow.SetText(GetDetails(node));
             detailsWindow.Show();
             detailsWindow.FormClosing += (obj, args) => m_detailsWindows.Remove(detailsWindow);
             m_detailsWindows.Add(detailsWindow);
+        }
+
+        private void UpdateDetailsWindows()
+        {
+            foreach (DetailsWindow window in m_detailsWindows)
+                window.SetText(GetDetails(window.Node));
         }
 
         // Fixes the scroll bars in the details view
@@ -551,7 +562,7 @@ namespace PQDIFExplorer
                 return;
 
             // Creates a new window in which to display the details
-            BeginInvoke(new Action<string>(DisplayDetailsWindow), details);
+            BeginInvoke(new Action<TreeNode>(DisplayDetailsWindow), node);
 
             // Cancel expand or collapse once to suppress the
             // default behavior of expand/collapse on double-click

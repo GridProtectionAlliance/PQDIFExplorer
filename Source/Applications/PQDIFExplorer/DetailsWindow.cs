@@ -32,6 +32,8 @@ namespace PQDIFExplorer
     /// </summary>
     public partial class DetailsWindow : Form
     {
+        private TreeNode m_node;
+
         /// <summary>
         /// Creates a new instance of the <see cref="DetailsWindow"/> class.
         /// </summary>
@@ -41,9 +43,25 @@ namespace PQDIFExplorer
         }
 
         /// <summary>
+        /// Gets or sets the node whose details are
+        /// displayed in the text box of the details window.
+        /// </summary>
+        public TreeNode Node
+        {
+            get
+            {
+                return m_node;
+            }
+            set
+            {
+                m_node = value;
+            }
+        }
+
+        /// <summary>
         /// Sets the text in the text box of the details window.
         /// </summary>
-        /// <param name="text"></param>
+        /// <param name="text">The text to be displayed in the details window.</param>
         public void SetText(string text)
         {
             DetailsTextBox.Clear();
