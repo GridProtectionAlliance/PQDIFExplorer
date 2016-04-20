@@ -396,10 +396,14 @@ namespace PQDIFExplorer
             details.AppendLine($"       Type: {record.Header.TypeOfRecord} ({record.Header.RecordTypeTag})");
             details.AppendLine($"Header Size: {record.Header.HeaderSize}");
             details.AppendLine($"  Body Size: {record.Header.BodySize}");
-            details.AppendLine($"   Checksum: {record.Header.Checksum}");
 
-            // Look up the element's tag to display detailed information about the element as defined
-            // by its tag as well as the expected type of the element and its value based on the tag
+            if ((object)record.Body != null)
+                details.AppendLine($"   Checksum: 0x{record.Header.Checksum:X} (Computed: 0x{record.Body.Checksum:X})");
+            else
+                details.AppendLine($"   Checksum: 0x{record.Header.Checksum:X} (Computed: 0x1)");
+
+            // Look up the record's tag to display detailed
+            // information about the record as defined by its tag
             tag = GSF.PQDIF.Tag.GetTag(record.Header.RecordTypeTag);
 
             if ((object)tag != null)
