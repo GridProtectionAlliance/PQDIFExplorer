@@ -1,4 +1,4 @@
-# PQDIF Explorer
+![Logo](https://raw.githubusercontent.com/GridProtectionAlliance/PQDIFExplorer/master/readme%20files/Logo.png)
 
 PQDIF Explorer is a simple desktop application designed for low-level
 visualization of data stored in the Power Quality Data Interchange Format.
@@ -13,6 +13,10 @@ The following lists some of the features of the PQDIF Explorer.
 * Includes an XML file which describes all the tags and IDs in the PQDIF standard.
 * Custom tags or IDs can be added to the XML and will be reflected in the PQDIF Explorer.
 * Includes the GSF.PQDIF library which contains GPA's PQDIF parser for .NET applications.
+
+**Where PQDIFExplorer Fits In:**
+
+![Where it fits in](https://raw.githubusercontent.com/GridProtectionAlliance/PQDIFExplorer/master/readme%20files/Where%20it%20fits%20in.png)
 
 # Documentation
 
