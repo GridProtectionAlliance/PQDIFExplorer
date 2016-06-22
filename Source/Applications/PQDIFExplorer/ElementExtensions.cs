@@ -99,24 +99,26 @@ namespace PQDIFExplorer
         {
             string[] values = value.Trim('{', '}').Split(',');
 
-            for (int i = 0; i < values.Length; i++)
+            if (element.TypeOfValue == PhysicalType.Char1)
             {
-                string trim = values[i].Trim();
+                byte[] bytes = Encoding.ASCII.GetBytes(value + (char)0);
+                element.Size = bytes.Length;
+                element.SetValues(bytes, 0);
+            }
+            else if (element.TypeOfValue == PhysicalType.Char2)
+            {
+                byte[] bytes = Encoding.Unicode.GetBytes(value + (char)0);
+                element.Size = bytes.Length;
+                element.SetValues(bytes, 0);
+            }
+            else
+            {
+                element.Size = values.Length;
 
-                if (element.TypeOfValue == PhysicalType.Char1)
+                for (int i = 0; i < values.Length; i++)
                 {
-                    byte[] bytes = Encoding.ASCII.GetBytes(value + (char)0);
-                    element.Size = bytes.Length;
-                    element.SetValues(bytes, 0);
-                }
-                else if (element.TypeOfValue == PhysicalType.Char2)
-                {
-                    byte[] bytes = Encoding.Unicode.GetBytes(value + (char)0);
-                    element.Size = bytes.Length;
-                    element.SetValues(bytes, 0);
-                }
-                else
-                {
+                    string trim = values[i].Trim();
+
                     if (element.TypeOfValue == PhysicalType.Guid)
                         element.SetGuid(i, Guid.Parse(trim));
                     else if (element.TypeOfValue == PhysicalType.Complex8)
