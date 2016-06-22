@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-  <Product Id="{B5F451E9-95A9-480D-81D9-BEF901F68F61}" Name="PQDIF Explorer" Language="1033" Version="!(bind.FileVersion.PQDIFExplorer.exe)" Manufacturer="Grid Protection Alliance" UpgradeCode="{853D8F23-C121-4412-A19D-9F4B173BEE77}">
+  <Product Id="{7EF80E37-0D19-4C8A-B65E-0365E7075B24}" Name="PQDIF Explorer" Language="1033" Version="!(bind.FileVersion.PQDIFExplorer.exe)" Manufacturer="Grid Protection Alliance" UpgradeCode="{853D8F23-C121-4412-A19D-9F4B173BEE77}">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
