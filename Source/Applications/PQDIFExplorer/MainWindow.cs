@@ -44,9 +44,17 @@ namespace PQDIFExplorer
     /// </summary>
     public partial class MainWindow : Form
     {
+
+        #region [ Members ]
+
         private string m_filePath;
         private List<DetailsWindow> m_detailsWindows;
         private TreeNode m_previouslySelectedNode;
+        private List<Exception> m_exceptionList;
+
+        #endregion
+
+        #region [ Constructors ]
 
         /// <summary>
         /// Creates a new instance of the <see cref="MainWindow"/> class.
@@ -56,12 +64,17 @@ namespace PQDIFExplorer
             InitializeComponent();
         }
 
+        #endregion
+
+        #region [ Methods ]
+
         // Opens the given file for exploration.
         private void OpenFile(string filePath)
         {
             Record record;
             ContainerRecord containerRecord;
             IEnumerable<List<TreeNode>> childNodes;
+            m_exceptionList = new List<Exception>();
 
             // Close existing details windows
             foreach (DetailsWindow window in new List<DetailsWindow>(m_detailsWindows))
@@ -75,23 +88,45 @@ namespace PQDIFExplorer
             {
                 parser.Open();
 
-                while (parser.HasNextRecord())
+                try
                 {
-                    // Parse the next record
-                    record = parser.NextRecord();
-                    
-                    // The compression algorithm and compression style are necessary for properly parsing the file
-                    // and must be obtained by parsing the logical structure of the container record
-                    if (record.Header.TypeOfRecord == RecordType.Container)
+                    while (parser.HasNextRecord())
                     {
-                        containerRecord = ContainerRecord.CreateContainerRecord(record);
-                        parser.CompressionAlgorithm = containerRecord.CompressionAlgorithm;
-                        parser.CompressionStyle = containerRecord.CompressionStyle;
-                    }
+                        // Parse the next record
+                        record = parser.NextRecord();
 
-                    // Convert this record and all its child elements to a node for
-                    // the tree view and add the node to the root level of the tree
-                    RecordTree.Nodes.Add(ToTreeNode(record));
+                        // The compression algorithm and compression style are necessary for properly parsing the file
+                        // and must be obtained by parsing the logical structure of the container record
+                        if (record.Header.TypeOfRecord == RecordType.Container)
+                        {
+                            containerRecord = ContainerRecord.CreateContainerRecord(record);
+                            parser.CompressionAlgorithm = containerRecord.CompressionAlgorithm;
+                            parser.CompressionStyle = containerRecord.CompressionStyle;
+                        }
+
+                        // Convert this record and all its child elements to a node for
+                        // the tree view and add the node to the root level of the tree
+                        RecordTree.Nodes.Add(ToTreeNode(record));
+                    }
+                }
+                catch (Exception e)
+                {
+                    string message = "A fatal error occured while reading the file:\n\n" + e.Message;
+                    string caption = "Exception";
+                    MessageBoxButtons button = MessageBoxButtons.OK;
+
+                    MessageBox.Show(message, caption, button, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    if (parser.ExceptionList.Count > parser.MaximumExceptionsAllowed)
+                    {
+                        string message = "Maximum number of exceptions reached.";
+                        string caption = "Unable to continue";
+                        MessageBoxButtons button = MessageBoxButtons.OK;
+
+                        MessageBox.Show(message, caption, button, MessageBoxIcon.Error);
+                    }
                 }
 
                 // If the file has has more than one record with the same
@@ -107,6 +142,8 @@ namespace PQDIFExplorer
                     for (int i = 0; i < list.Count; i++)
                         list[i].Text = $"[{i}] {list[i].Text}";
                 }
+
+                m_exceptionList = parser.ExceptionList;
             }
 
             // Enable menu items that only work when a file is open
@@ -115,6 +152,7 @@ namespace PQDIFExplorer
             FindToolStripMenuItem.Enabled = true;
             FindNextToolStripMenuItem.Enabled = true;
             FindPreviousToolStripMenuItem.Enabled = true;
+            showExceptionsToolStripMenuItem.Enabled = true;
 
             // Update the file path and window title
             Text = $"PQDIFExplorer - [{filePath}]";
@@ -130,7 +168,7 @@ namespace PQDIFExplorer
                 foreach (TreeNode treeNode in RecordTree.Nodes)
                 {
                     Record r = (Record)treeNode.Tag;
-                    
+
                     if (treeNode.NextNode == null)
                         physicalWriter.WriteRecord((Record)treeNode.Tag, true);
                     else
@@ -212,7 +250,7 @@ namespace PQDIFExplorer
             // Return the node that represents the record
             return node;
         }
-        
+
         private TreeNode ToTreeNode(Element element)
         {
             TreeNode node;
@@ -225,7 +263,9 @@ namespace PQDIFExplorer
             // the tag name or the tag itself if no name is available
             tag = GSF.PQDIF.Tag.GetTag(element.TagOfElement);
 
-            if ((object)tag != null)
+            if (element is ErrorElement)
+                node = new TreeNode("Error");
+            else if ((object)tag != null)
                 node = new TreeNode(tag.Name);
             else
                 node = new TreeNode(element.TagOfElement.ToString());
@@ -247,6 +287,13 @@ namespace PQDIFExplorer
                     node.ImageIndex = 8;
                     node.SelectedImageIndex = 8;
                     break;
+            }
+
+            // Use the error image for error elements
+            if (element is ErrorElement)
+            {
+                node.ImageIndex = 9;
+                node.SelectedImageIndex = 9;
             }
 
             // Use the blank image for blank elements
@@ -398,9 +445,16 @@ namespace PQDIFExplorer
             details.AppendLine($"  Body Size: {record.Header.BodySize}");
 
             if ((object)record.Body != null)
+            {
+                details.AppendLine($"  Read Size: {record.Body.Collection.ReadSize}");
                 details.AppendLine($"   Checksum: 0x{record.Header.Checksum:X} (Computed: 0x{record.Body.Checksum:X})");
+            }
+
             else
+            {
+                details.AppendLine($"  Read Size: 0");
                 details.AppendLine($"   Checksum: 0x{record.Header.Checksum:X} (Computed: 0x1)");
+            }
 
             // Look up the record's tag to display detailed
             // information about the record as defined by its tag
@@ -428,6 +482,8 @@ namespace PQDIFExplorer
             // Display the value if the element is a vector or a scalar
             if (element.TypeOfElement != ElementType.Collection)
                 details.AppendLine($"        Value: {element.ValueAsString()}").AppendLine();
+            else
+                details.AppendLine($"    Read Size: {((CollectionElement)element).ReadSize}").AppendLine();
 
             // Display the tag of the element and the actual type of the
             // element and its value as defined by the data in the file
@@ -638,6 +694,8 @@ namespace PQDIFExplorer
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.collection.png")));
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.vector.png")));
             RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.scalar.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.error.png")));
+
 
             // Set initial size of the form
             if (Settings.Default.WindowSize != null)
@@ -913,5 +971,23 @@ namespace PQDIFExplorer
         {
             FindPanelCloseButton.Font = new Font(FindPanelCloseButton.Font, FontStyle.Regular);
         }
+
+        private void showExceptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExceptionListWindow exceptionWindow = new ExceptionListWindow();
+            StringBuilder message = new StringBuilder();
+            message.AppendLine("Exceptions:");
+            foreach (Exception exception in m_exceptionList)
+            {
+                message.AppendLine(exception.Message);
+            }
+
+            exceptionWindow.ExceptionList.Text = message.ToString();
+            exceptionWindow.Show();
+        }
+
+        #endregion
+
+
     }
 }

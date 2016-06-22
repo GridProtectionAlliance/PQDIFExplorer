@@ -30,7 +30,6 @@
         {
             this.DetailsTextBox = new System.Windows.Forms.TextBox();
             this.SplitContainer = new System.Windows.Forms.SplitContainer();
-            this.RecordTree = new PQDIFExplorer.BufferedTreeView();
             this.SplashScreenLabel = new System.Windows.Forms.Label();
             this.RootPanel = new System.Windows.Forms.Panel();
             this.FileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,6 +50,8 @@
             this.FindNextButton = new System.Windows.Forms.Button();
             this.FindPreviousButton = new System.Windows.Forms.Button();
             this.FindTextBox = new System.Windows.Forms.TextBox();
+            this.showExceptionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RecordTree = new PQDIFExplorer.BufferedTreeView();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer)).BeginInit();
             this.SplitContainer.Panel1.SuspendLayout();
             this.SplitContainer.Panel2.SuspendLayout();
@@ -94,17 +95,6 @@
             this.SplitContainer.SplitterDistance = 288;
             this.SplitContainer.TabIndex = 0;
             this.SplitContainer.TabStop = false;
-            // 
-            // RecordTree
-            // 
-            this.RecordTree.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.RecordTree.Location = new System.Drawing.Point(0, 0);
-            this.RecordTree.Name = "RecordTree";
-            this.RecordTree.Size = new System.Drawing.Size(288, 545);
-            this.RecordTree.TabIndex = 0;
-            this.RecordTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.RecordTree_AfterSelect);
-            this.RecordTree.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RecordTree_KeyDown);
-            this.RecordTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.RecordTree_MouseDown);
             // 
             // SplashScreenLabel
             // 
@@ -183,6 +173,7 @@
             this.MenuBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.FileToolStripMenuItem,
             this.SearchToolStripMenuItem,
+            this.showExceptionsToolStripMenuItem,
             this.PQDiffractorToolStripMenuItem});
             this.MenuBar.Location = new System.Drawing.Point(0, 0);
             this.MenuBar.Name = "MenuBar";
@@ -308,6 +299,25 @@
             this.FindTextBox.TabIndex = 0;
             this.FindTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.FindTextBox_KeyDown);
             // 
+            // showExceptionsToolStripMenuItem
+            // 
+            this.showExceptionsToolStripMenuItem.Enabled = false;
+            this.showExceptionsToolStripMenuItem.Name = "showExceptionsToolStripMenuItem";
+            this.showExceptionsToolStripMenuItem.Size = new System.Drawing.Size(75, 20);
+            this.showExceptionsToolStripMenuItem.Text = "Exceptions";
+            this.showExceptionsToolStripMenuItem.Click += new System.EventHandler(this.showExceptionsToolStripMenuItem_Click);
+            // 
+            // RecordTree
+            // 
+            this.RecordTree.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.RecordTree.Location = new System.Drawing.Point(0, 0);
+            this.RecordTree.Name = "RecordTree";
+            this.RecordTree.Size = new System.Drawing.Size(288, 545);
+            this.RecordTree.TabIndex = 0;
+            this.RecordTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.RecordTree_AfterSelect);
+            this.RecordTree.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RecordTree_KeyDown);
+            this.RecordTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.RecordTree_MouseDown);
+            // 
             // MainWindow
             // 
             this.AllowDrop = true;
@@ -365,6 +375,7 @@
         private System.Windows.Forms.ToolStripMenuItem FindPreviousToolStripMenuItem;
         private System.Windows.Forms.Label FindPanelCloseButton;
         private BufferedTreeView RecordTree;
+        private System.Windows.Forms.ToolStripMenuItem showExceptionsToolStripMenuItem;
     }
 }
 

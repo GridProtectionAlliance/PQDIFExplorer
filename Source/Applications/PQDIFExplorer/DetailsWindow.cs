@@ -32,7 +32,14 @@ namespace PQDIFExplorer
     /// </summary>
     public partial class DetailsWindow : Form
     {
-        private TreeNode m_node;
+        #region [ Members ]
+
+        // Fields
+        private TreeNode m_node; 
+
+        #endregion
+
+        #region [ Constructors ]
 
         /// <summary>
         /// Creates a new instance of the <see cref="DetailsWindow"/> class.
@@ -41,6 +48,10 @@ namespace PQDIFExplorer
         {
             InitializeComponent();
         }
+
+        #endregion
+
+        #region [ Properties ]
 
         /// <summary>
         /// Gets or sets the node whose details are
@@ -57,6 +68,10 @@ namespace PQDIFExplorer
                 m_node = value;
             }
         }
+
+        #endregion
+
+        #region [ Methods ]
 
         /// <summary>
         /// Sets the text in the text box of the details window.
@@ -131,6 +146,8 @@ namespace PQDIFExplorer
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
-        }
+        } 
+
+        #endregion
     }
 }

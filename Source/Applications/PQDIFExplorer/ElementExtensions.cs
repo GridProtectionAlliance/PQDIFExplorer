@@ -138,6 +138,10 @@ namespace PQDIFExplorer
             if (element.TypeOfElement == ElementType.Vector)
                 return ValueAsString((VectorElement)element);
 
+            ErrorElement errorElement = element as ErrorElement;
+            if (errorElement != null)
+                return ValueAsString(errorElement);
+
             return null;
         }
 
@@ -261,6 +265,11 @@ namespace PQDIFExplorer
 
             // Wrap the string in curly braces and return
             return $"{{ {join} }}";
+        }
+        
+        public static string ValueAsString(this ErrorElement element)
+        {
+            return element.Exception.Message;
         }
     }
 }
