@@ -111,6 +111,7 @@ namespace PQDIFExplorer
                 }
                 catch (Exception e)
                 {
+                    parser.ExceptionList.Add(e);
                     string message = "A fatal error occured while reading the file:\n\n" + e.Message;
                     string caption = "Exception";
                     MessageBoxButtons button = MessageBoxButtons.OK;
@@ -121,6 +122,7 @@ namespace PQDIFExplorer
                 {
                     if (parser.ExceptionList.Count > parser.MaximumExceptionsAllowed)
                     {
+                        parser.ExceptionList.Add(new InvalidOperationException("Maximum number of exceptions reached"));
                         string message = "Maximum number of exceptions reached.";
                         string caption = "Unable to continue";
                         MessageBoxButtons button = MessageBoxButtons.OK;
