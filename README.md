@@ -13,14 +13,17 @@ The following lists some of the features of the PQDIF Explorer.
 * Includes an XML file which describes all the tags and IDs in the PQDIF standard.
 * Custom tags or IDs can be added to the XML and will be reflected in the PQDIF Explorer.
 * Includes the GSF.PQDIF library which contains GPA's PQDIF parser for .NET applications.
+* Ability to gracefully handle malformed files.
+* Ability to see exceptions encountered while parsing files.
 
 **Where PQDIFExplorer Fits In:**
 
 ![Where it fits in](https://raw.githubusercontent.com/GridProtectionAlliance/PQDIFExplorer/master/readme%20files/Where%20it%20fits%20in.png)
 
-# Documentation
+# Documentation and Support
 
-There is currently no documentation for PQDIFExplorer.
+* Get in contact with our development team on our [discussion boards](http://discussions.gridprotectionalliance.org/c/gpa-products/pqdifexplorer).
+* Check out the [wiki](https://gridprotectionalliance.org/wiki/doku.php?id=pqdifexplorer:overview).
 
 # Deployment
 
