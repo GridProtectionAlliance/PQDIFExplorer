@@ -44,7 +44,6 @@ namespace PQDIFExplorer
     /// </summary>
     public partial class MainWindow : Form
     {
-
         #region [ Members ]
 
         private string m_filePath;
@@ -265,9 +264,7 @@ namespace PQDIFExplorer
             // the tag name or the tag itself if no name is available
             tag = GSF.PQDIF.Tag.GetTag(element.TagOfElement);
 
-            if (element is ErrorElement)
-                node = new TreeNode("Error");
-            else if ((object)tag != null)
+            if ((object)tag != null)
                 node = new TreeNode(tag.Name);
             else
                 node = new TreeNode(element.TagOfElement.ToString());
@@ -989,7 +986,5 @@ namespace PQDIFExplorer
         }
 
         #endregion
-
-
     }
 }
