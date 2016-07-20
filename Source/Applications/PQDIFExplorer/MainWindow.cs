@@ -148,6 +148,7 @@ namespace PQDIFExplorer
             }
 
             // Enable menu items that only work when a file is open
+            OpenInNewWindowToolStripMenuItem.Enabled = true;
             SaveToolStripMenuItem.Enabled = true;
             SaveAsToolStripMenuItem.Enabled = true;
             FindToolStripMenuItem.Enabled = true;
@@ -161,7 +162,7 @@ namespace PQDIFExplorer
             m_filePath = filePath;
         }
 
-        // Opens the given file for exploration.
+        // Saves data to the file at the given path.
         private void SaveFile(string filePath)
         {
             using (PhysicalWriter physicalWriter = new PhysicalWriter(filePath))
@@ -660,6 +661,25 @@ namespace PQDIFExplorer
             RecordTree.BeforeExpand += expandCollapseHandler;
             RecordTree.BeforeCollapse += expandCollapseHandler;
         }
+        
+        // Prompts the user, asking whether they would like to save their changes to the file.
+        // If the user chooses to save the changes, this writes changes to the file at the given path.
+        // Returns false if the user chooses to cancel the operation that triggered the prompt.
+        private bool PromptForSave(string filePath)
+        {
+            if (Text.EndsWith("*"))
+            {
+                DialogResult result = MessageBox.Show("Do you want to save your changes?", "Save Changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Cancel)
+                    return false;
+
+                if (result == DialogResult.Yes)
+                    SaveFile(filePath);
+            }
+
+            return true;
+        }
 
         // Handler called when the window loads.
         private void MainWindow_Load(object sender, EventArgs e)
@@ -710,6 +730,9 @@ namespace PQDIFExplorer
         // Handler called when the user selects the option to open a PQDIF file.
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!PromptForSave(m_filePath))
+                return;
+
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.DefaultExt = ".pqd";
@@ -718,6 +741,23 @@ namespace PQDIFExplorer
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                     OpenFile(openFileDialog.FileName);
             }
+        }
+
+        // Handler called when the user selects the option to open the current PQDIF file in a new window.
+        private void OpenInNewWindowToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string fileName = Application.ExecutablePath;
+            string arguments = "\"" + m_filePath + "\"";
+            using (Process.Start(fileName, arguments)) { }
+        }
+
+        // Handler called when the user selects the option to reload a PQDIF file.
+        private void ReloadToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!PromptForSave(m_filePath))
+                return;
+
+            OpenFile(m_filePath);
         }
 
         // Handler called when the user drags files onto the window.
@@ -874,18 +914,10 @@ namespace PQDIFExplorer
         {
             List<DetailsWindow> detailsWindows = new List<DetailsWindow>(m_detailsWindows);
 
-            if (Text.EndsWith("*"))
+            if (!PromptForSave(m_filePath))
             {
-                DialogResult result = MessageBox.Show("Do you want to save your changes?", "Save Changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Cancel)
-                {
-                    e.Cancel = true;
-                    return;
-                }
-
-                if (result == DialogResult.Yes)
-                    SaveFile(m_filePath);
+                e.Cancel = true;
+                return;
             }
 
             foreach (DetailsWindow detailsWindow in detailsWindows)
