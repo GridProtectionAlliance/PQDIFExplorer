@@ -74,7 +74,7 @@ namespace PQDIFExplorer
             ContainerRecord containerRecord;
             IEnumerable<List<TreeNode>> childNodes;
             m_exceptionList = new List<Exception>();
-
+            
             // Close existing details windows
             foreach (DetailsWindow window in new List<DetailsWindow>(m_detailsWindows))
                 window.Close();
@@ -154,7 +154,8 @@ namespace PQDIFExplorer
             FindToolStripMenuItem.Enabled = true;
             FindNextToolStripMenuItem.Enabled = true;
             FindPreviousToolStripMenuItem.Enabled = true;
-            showExceptionsToolStripMenuItem.Enabled = true;
+            DetailsToolStripMenuItem.Enabled = true;
+            ShowExceptionsToolStripMenuItem.Enabled = true;
 
             // Update the file path and window title
             Text = $"PQDIFExplorer - [{filePath}]";
@@ -481,7 +482,7 @@ namespace PQDIFExplorer
 
             // Display the value if the element is a vector or a scalar
             if (element.TypeOfElement != ElementType.Collection)
-                details.AppendLine($"        Value: {element.ValueAsString()}").AppendLine();
+                details.AppendLine($"        Value: {ValueAsString(element)}").AppendLine();
             else
                 details.AppendLine($"    Read Size: {((CollectionElement)element).ReadSize}").AppendLine();
 
@@ -508,6 +509,20 @@ namespace PQDIFExplorer
             }
 
             return details.ToString();
+        }
+
+        // Converts the value of the given element
+        // to the appropriate string representation.
+        private string ValueAsString(Element element)
+        {
+            try
+            {
+                return element.ValueAsString();
+            }
+            catch
+            {
+                return $"ERROR ({element.ValueAsHex()})";
+            }
         }
 
         // Creates the context menu for the given tree node.
@@ -576,6 +591,7 @@ namespace PQDIFExplorer
         {
             DetailsWindow detailsWindow = new DetailsWindow();
             detailsWindow.Node = node;
+            detailsWindow.Text = $"{node.Text} Details";
             detailsWindow.SetText(GetDetails(node));
             detailsWindow.Show();
             detailsWindow.FormClosing += (obj, args) => m_detailsWindows.Remove(detailsWindow);
@@ -1003,18 +1019,28 @@ namespace PQDIFExplorer
             FindPanelCloseButton.Font = new Font(FindPanelCloseButton.Font, FontStyle.Regular);
         }
 
-        private void showExceptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        // Handler called when the user requests to view the Details window.
+        private void DetailsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ExceptionListWindow exceptionWindow = new ExceptionListWindow();
-            StringBuilder message = new StringBuilder();
-            message.AppendLine("Exceptions:");
-            foreach (Exception exception in m_exceptionList)
-            {
-                message.AppendLine(exception.Message);
-            }
+            if ((object)RecordTree.SelectedNode != null)
+                DisplayDetailsWindow(RecordTree.SelectedNode);
+        }
 
-            exceptionWindow.ExceptionList.Text = message.ToString();
-            exceptionWindow.Show();
+        // Handler called when the users requests to view the Exceptions list.
+        private void ShowExceptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (ExceptionListWindow exceptionWindow = new ExceptionListWindow())
+            {
+                StringBuilder message = new StringBuilder();
+
+                message.AppendLine("Exceptions:");
+
+                foreach (Exception exception in m_exceptionList)
+                    message.AppendLine(exception.Message);
+
+                exceptionWindow.ExceptionList.Text = message.ToString();
+                exceptionWindow.ShowDialog();
+            }
         }
 
         #endregion

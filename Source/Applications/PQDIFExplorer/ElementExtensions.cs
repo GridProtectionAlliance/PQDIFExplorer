@@ -141,7 +141,8 @@ namespace PQDIFExplorer
                 return ValueAsString((VectorElement)element);
 
             ErrorElement errorElement = element as ErrorElement;
-            if (errorElement != null)
+
+            if ((object)errorElement != null)
                 return ValueAsString(errorElement);
 
             return null;
@@ -268,10 +269,35 @@ namespace PQDIFExplorer
             // Wrap the string in curly braces and return
             return $"{{ {join} }}";
         }
-        
+
+        // Converts the value of the element to a string representation.
         public static string ValueAsString(this ErrorElement element)
         {
             return element.Exception.Message;
+        }
+
+        // Converts the value of the element to a hexadecimal representation.
+        public static string ValueAsHex(this Element element)
+        {
+            if (element.TypeOfElement == ElementType.Scalar)
+                return ValueAsHex((ScalarElement)element);
+
+            if (element.TypeOfElement == ElementType.Vector)
+                return ValueAsHex((VectorElement)element);
+
+            return null;
+        }
+
+        // Converts the value of the element to a hexadecimal representation.
+        public static string ValueAsHex(this ScalarElement element)
+        {
+            return "0x" + BitConverter.ToString(element.GetValue()).Replace("-", "");
+        }
+
+        // Converts the value of the element to a hexadecimal representation.
+        public static string ValueAsHex(this VectorElement element)
+        {
+            return "0x" + BitConverter.ToString(element.GetValues()).Replace("-", "");
         }
     }
 }

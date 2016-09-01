@@ -52,35 +52,51 @@ namespace PQDIFExplorer
         private void InitializeComponent()
         {
             this.ExceptionList = new System.Windows.Forms.TextBox();
+            this.RootPanel = new System.Windows.Forms.Panel();
+            this.RootPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // ExceptionList
             // 
             this.ExceptionList.AcceptsReturn = true;
             this.ExceptionList.AcceptsTab = true;
-            this.ExceptionList.Location = new System.Drawing.Point(13, 13);
+            this.ExceptionList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ExceptionList.Location = new System.Drawing.Point(10, 10);
             this.ExceptionList.Multiline = true;
             this.ExceptionList.Name = "ExceptionList";
             this.ExceptionList.ReadOnly = true;
             this.ExceptionList.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.ExceptionList.Size = new System.Drawing.Size(557, 608);
+            this.ExceptionList.Size = new System.Drawing.Size(562, 359);
             this.ExceptionList.TabIndex = 0;
+            // 
+            // RootPanel
+            // 
+            this.RootPanel.Controls.Add(this.ExceptionList);
+            this.RootPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.RootPanel.Location = new System.Drawing.Point(0, 0);
+            this.RootPanel.Name = "RootPanel";
+            this.RootPanel.Padding = new System.Windows.Forms.Padding(10);
+            this.RootPanel.Size = new System.Drawing.Size(582, 379);
+            this.RootPanel.TabIndex = 1;
             // 
             // ExceptionListWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(582, 633);
-            this.Controls.Add(this.ExceptionList);
+            this.ClientSize = new System.Drawing.Size(582, 379);
+            this.Controls.Add(this.RootPanel);
             this.Name = "ExceptionListWindow";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "ExceptionListWindow";
+            this.RootPanel.ResumeLayout(false);
+            this.RootPanel.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
 
         internal System.Windows.Forms.TextBox ExceptionList;
+        private System.Windows.Forms.Panel RootPanel;
     }
 }
