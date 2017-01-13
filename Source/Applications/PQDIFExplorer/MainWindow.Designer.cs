@@ -30,7 +30,6 @@
         {
             this.DetailsTextBox = new System.Windows.Forms.TextBox();
             this.SplitContainer = new System.Windows.Forms.SplitContainer();
-            this.RecordTree = new PQDIFExplorer.BufferedTreeView();
             this.SplashScreenLabel = new System.Windows.Forms.Label();
             this.RootPanel = new System.Windows.Forms.Panel();
             this.FileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -59,7 +58,6 @@
             this.FindPreviousButton = new System.Windows.Forms.Button();
             this.FindTextBox = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer)).BeginInit();
-            this.SplitContainer.Panel1.SuspendLayout();
             this.SplitContainer.Panel2.SuspendLayout();
             this.SplitContainer.SuspendLayout();
             this.RootPanel.SuspendLayout();
@@ -89,10 +87,6 @@
             this.SplitContainer.Location = new System.Drawing.Point(10, 10);
             this.SplitContainer.Name = "SplitContainer";
             // 
-            // SplitContainer.Panel1
-            // 
-            this.SplitContainer.Panel1.Controls.Add(this.RecordTree);
-            // 
             // SplitContainer.Panel2
             // 
             this.SplitContainer.Panel2.Controls.Add(this.SplashScreenLabel);
@@ -101,17 +95,6 @@
             this.SplitContainer.SplitterDistance = 288;
             this.SplitContainer.TabIndex = 0;
             this.SplitContainer.TabStop = false;
-            // 
-            // RecordTree
-            // 
-            this.RecordTree.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.RecordTree.Location = new System.Drawing.Point(0, 0);
-            this.RecordTree.Name = "RecordTree";
-            this.RecordTree.Size = new System.Drawing.Size(288, 545);
-            this.RecordTree.TabIndex = 0;
-            this.RecordTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.RecordTree_AfterSelect);
-            this.RecordTree.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RecordTree_KeyDown);
-            this.RecordTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.RecordTree_MouseDown);
             // 
             // SplashScreenLabel
             // 
@@ -280,7 +263,7 @@
             // 
             this.DetailsToolStripMenuItem.Enabled = false;
             this.DetailsToolStripMenuItem.Name = "DetailsToolStripMenuItem";
-            this.DetailsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.DetailsToolStripMenuItem.Size = new System.Drawing.Size(130, 22);
             this.DetailsToolStripMenuItem.Text = "Details";
             this.DetailsToolStripMenuItem.Click += new System.EventHandler(this.DetailsToolStripMenuItem_Click);
             // 
@@ -288,7 +271,7 @@
             // 
             this.ShowExceptionsToolStripMenuItem.Enabled = false;
             this.ShowExceptionsToolStripMenuItem.Name = "ShowExceptionsToolStripMenuItem";
-            this.ShowExceptionsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.ShowExceptionsToolStripMenuItem.Size = new System.Drawing.Size(130, 22);
             this.ShowExceptionsToolStripMenuItem.Text = "Exceptions";
             this.ShowExceptionsToolStripMenuItem.Click += new System.EventHandler(this.ShowExceptionsToolStripMenuItem_Click);
             // 
@@ -389,7 +372,6 @@
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainWindow_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainWindow_DragEnter);
-            this.SplitContainer.Panel1.ResumeLayout(false);
             this.SplitContainer.Panel2.ResumeLayout(false);
             this.SplitContainer.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer)).EndInit();
@@ -429,7 +411,6 @@
         private System.Windows.Forms.Button FindPreviousButton;
         private System.Windows.Forms.ToolStripMenuItem FindPreviousToolStripMenuItem;
         private System.Windows.Forms.Label FindPanelCloseButton;
-        private BufferedTreeView RecordTree;
         private System.Windows.Forms.ToolStripMenuItem ReloadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem OpenInNewWindowToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator FileMenuSeparator1;

@@ -46,6 +46,7 @@ namespace PQDIFExplorer
     {
         #region [ Members ]
 
+        // Fields
         private string m_filePath;
         private List<DetailsWindow> m_detailsWindows;
         private TreeNode m_previouslySelectedNode;
@@ -61,7 +62,14 @@ namespace PQDIFExplorer
         public MainWindow()
         {
             InitializeComponent();
+            CreateRecordTree();
         }
+
+        #endregion
+
+        #region [ Properties ]
+
+        private TreeView RecordTree { get; set; }
 
         #endregion
 
@@ -71,96 +79,109 @@ namespace PQDIFExplorer
         private void OpenFile(string filePath)
         {
             Record record;
-            ContainerRecord containerRecord;
+            List<TreeNode> recordNodes;
             IEnumerable<List<TreeNode>> childNodes;
-            m_exceptionList = new List<Exception>();
-            
-            // Close existing details windows
-            foreach (DetailsWindow window in new List<DetailsWindow>(m_detailsWindows))
-                window.Close();
+            ContainerRecord containerRecord;
 
-            // Clear out existing items in the tree view
-            RecordTree.Nodes.Clear();
-
-            // Use the physical parser to more closely display the structure of the file
-            using (PhysicalParser parser = new PhysicalParser(filePath))
+            try
             {
-                parser.Open();
+                Cursor = Cursors.WaitCursor;
+                m_exceptionList = new List<Exception>();
+                recordNodes = new List<TreeNode>();
 
-                try
+                // Close existing details windows
+                foreach (DetailsWindow window in new List<DetailsWindow>(m_detailsWindows))
+                    window.Close();
+
+                // Refresh the tree view
+                CreateRecordTree();
+
+                // Use the physical parser to more closely display the structure of the file
+                using (PhysicalParser parser = new PhysicalParser(filePath))
                 {
-                    while (parser.HasNextRecord())
-                    {
-                        // Parse the next record
-                        record = parser.NextRecord();
+                    parser.Open();
 
-                        // The compression algorithm and compression style are necessary for properly parsing the file
-                        // and must be obtained by parsing the logical structure of the container record
-                        if (record.Header.TypeOfRecord == RecordType.Container)
+                    try
+                    {
+                        while (parser.HasNextRecord())
                         {
-                            containerRecord = ContainerRecord.CreateContainerRecord(record);
-                            parser.CompressionAlgorithm = containerRecord.CompressionAlgorithm;
-                            parser.CompressionStyle = containerRecord.CompressionStyle;
+                            // Parse the next record
+                            record = parser.NextRecord();
+
+                            // The compression algorithm and compression style are necessary for properly parsing the file
+                            // and must be obtained by parsing the logical structure of the container record
+                            if (record.Header.TypeOfRecord == RecordType.Container)
+                            {
+                                containerRecord = ContainerRecord.CreateContainerRecord(record);
+                                parser.CompressionAlgorithm = containerRecord.CompressionAlgorithm;
+                                parser.CompressionStyle = containerRecord.CompressionStyle;
+                            }
+
+                            // Convert this record and all its child elements to a node for
+                            // the tree view and add the node to the list of record nodes
+                            recordNodes.Add(ToTreeNode(record));
                         }
-
-                        // Convert this record and all its child elements to a node for
-                        // the tree view and add the node to the root level of the tree
-                        RecordTree.Nodes.Add(ToTreeNode(record));
                     }
-                }
-                catch (Exception e)
-                {
-                    parser.ExceptionList.Add(e);
-                    string message = "A fatal error occured while reading the file:\n\n" + e.Message;
-                    string caption = "Exception";
-                    MessageBoxButtons button = MessageBoxButtons.OK;
-
-                    MessageBox.Show(message, caption, button, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    if (parser.ExceptionList.Count > parser.MaximumExceptionsAllowed)
+                    catch (Exception e)
                     {
-                        parser.ExceptionList.Add(new InvalidOperationException("Maximum number of exceptions reached"));
-                        string message = "Maximum number of exceptions reached.";
-                        string caption = "Unable to continue";
+                        parser.ExceptionList.Add(e);
+                        string message = "A fatal error occured while reading the file:\n\n" + e.Message;
+                        string caption = "Exception";
                         MessageBoxButtons button = MessageBoxButtons.OK;
 
                         MessageBox.Show(message, caption, button, MessageBoxIcon.Error);
                     }
+                    finally
+                    {
+                        if (parser.ExceptionList.Count > parser.MaximumExceptionsAllowed)
+                        {
+                            parser.ExceptionList.Add(new InvalidOperationException("Maximum number of exceptions reached"));
+                            string message = "Maximum number of exceptions reached.";
+                            string caption = "Unable to continue";
+                            MessageBoxButtons button = MessageBoxButtons.OK;
+
+                            MessageBox.Show(message, caption, button, MessageBoxIcon.Error);
+                        }
+                    }
+
+                    // If the file has has more than one record with the same
+                    // type, add an index to the nodes to aid navigation
+                    childNodes = recordNodes
+                        .GroupBy(node => ((Record)node.Tag).Header.TypeOfRecord)
+                        .Select(grouping => grouping.ToList())
+                        .Where(list => list.Count > 1);
+
+                    foreach (List<TreeNode> list in childNodes)
+                    {
+                        for (int i = 0; i < list.Count; i++)
+                            list[i].Text = $"[{i}] {list[i].Text}";
+                    }
+
+                    // Add all record nodes to the root of the tree
+                    RecordTree.Nodes.AddRange(recordNodes.ToArray());
+
+                    m_exceptionList = parser.ExceptionList;
                 }
 
-                // If the file has has more than one record with the same
-                // type, add an index to the nodes to aid navigation
-                childNodes = RecordTree.Nodes
-                    .Cast<TreeNode>()
-                    .GroupBy(node => ((Record)node.Tag).Header.TypeOfRecord)
-                    .Select(grouping => grouping.ToList())
-                    .Where(list => list.Count > 1);
+                // Enable menu items that only work when a file is open
+                OpenInNewWindowToolStripMenuItem.Enabled = true;
+                SaveToolStripMenuItem.Enabled = true;
+                SaveAsToolStripMenuItem.Enabled = true;
+                FindToolStripMenuItem.Enabled = true;
+                FindNextToolStripMenuItem.Enabled = true;
+                FindPreviousToolStripMenuItem.Enabled = true;
+                DetailsToolStripMenuItem.Enabled = true;
+                ShowExceptionsToolStripMenuItem.Enabled = true;
 
-                foreach (List<TreeNode> list in childNodes)
-                {
-                    for (int i = 0; i < list.Count; i++)
-                        list[i].Text = $"[{i}] {list[i].Text}";
-                }
-
-                m_exceptionList = parser.ExceptionList;
+                // Update the file path and window title
+                Text = $"PQDIFExplorer - [{filePath}]";
+                DetailsTextBox.Text = string.Empty;
+                m_filePath = filePath;
             }
-
-            // Enable menu items that only work when a file is open
-            OpenInNewWindowToolStripMenuItem.Enabled = true;
-            SaveToolStripMenuItem.Enabled = true;
-            SaveAsToolStripMenuItem.Enabled = true;
-            FindToolStripMenuItem.Enabled = true;
-            FindNextToolStripMenuItem.Enabled = true;
-            FindPreviousToolStripMenuItem.Enabled = true;
-            DetailsToolStripMenuItem.Enabled = true;
-            ShowExceptionsToolStripMenuItem.Enabled = true;
-
-            // Update the file path and window title
-            Text = $"PQDIFExplorer - [{filePath}]";
-            DetailsTextBox.Text = string.Empty;
-            m_filePath = filePath;
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
         }
 
         // Saves data to the file at the given path.
@@ -206,12 +227,12 @@ namespace PQDIFExplorer
         {
             TreeNode node;
 
-            // If the record has a body, convert the
-            // collection element to a tree node and use that
+            // Create a new tree node for the record
+            node = new TreeNode();
+
+            // If the record has a body, add a stub node to represent its children
             if ((object)record.Body != null)
-                node = ToTreeNode(record.Body.Collection);
-            else
-                node = ToTreeNode(new CollectionElement());
+                node.Nodes.Add(new TreeNode());
 
             // Use the type of the record to identify it in the tree view
             node.Text = record.Header.TypeOfRecord.ToString();
@@ -341,39 +362,102 @@ namespace PQDIFExplorer
         // Finds the next node in the tree that matches the find text.
         private void FindNext()
         {
-            TreeNode startNode = RecordTree.SelectedNode ?? GetPreviousNode(RecordTree.Nodes[0]);
-            TreeNode node = startNode;
-            string findText = Regex.Escape(FindTextBox.Text);
-            bool found;
-
-            do
+            try
             {
-                node = GetNextNode(node);
-                found = Regex.IsMatch(node.Text + GetDetails(node), findText, RegexOptions.IgnoreCase);
-            }
-            while (!ReferenceEquals(node, startNode) && !found);
+                TreeNode startNode = RecordTree.SelectedNode ?? RecordTree.Nodes[0];
+                TreeNode node = startNode;
+                string findText = Regex.Escape(FindTextBox.Text);
+                bool found = false;
 
-            if (found)
-                RecordTree.SelectedNode = node;
+                Cursor = Cursors.WaitCursor;
+
+                if ((object)RecordTree.SelectedNode == null)
+                    found = Regex.IsMatch(node.Text + GetDetails(node), findText, RegexOptions.IgnoreCase);
+
+                while (!found)
+                {
+                    node = GetNextNode(node);
+                    found = Regex.IsMatch(node.Text + GetDetails(node), findText, RegexOptions.IgnoreCase);
+
+                    if (ReferenceEquals(node, startNode))
+                        break;
+                }
+
+                if (found)
+                {
+                    // If the node is in a detached subtree,
+                    // we must attach it before setting the selected node
+                    if ((object)node.TreeView == null)
+                    {
+                        TreeNode ancestor = node;
+
+                        while ((object)ancestor.Parent != null)
+                            ancestor = ancestor.Parent;
+
+                        TreeNode recordNode = (TreeNode)ancestor.Tag;
+                        TreeNode[] childNodes = ancestor.Nodes.Cast<TreeNode>().ToArray();
+                        ancestor.Nodes.Clear();
+                        recordNode.Nodes.Clear();
+                        recordNode.Nodes.AddRange(childNodes);
+                    }
+
+                    RecordTree.SelectedNode = node;
+                }
+                else
+                {
+                    MessageBox.Show($"The text '{FindTextBox.Text}' could not be found in this PQDIF file.", "Text not found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
         }
 
         // Finds the prior node in the tree that matches the find text.
         private void FindPrevious()
         {
-            TreeNode startNode = RecordTree.SelectedNode ?? RecordTree.Nodes[0];
-            TreeNode node = startNode;
-            string findText = Regex.Escape(FindTextBox.Text);
-            bool found;
-
-            do
+            try
             {
-                node = GetPreviousNode(node);
-                found = Regex.IsMatch(node.Text + GetDetails(node), findText, RegexOptions.IgnoreCase);
-            }
-            while (!ReferenceEquals(node, startNode) && !found);
+                TreeNode startNode = RecordTree.SelectedNode ?? RecordTree.Nodes[0];
+                TreeNode node = startNode;
+                string findText = Regex.Escape(FindTextBox.Text);
+                bool found;
 
-            if (found)
-                RecordTree.SelectedNode = node;
+                Cursor = Cursors.WaitCursor;
+
+                do
+                {
+                    node = GetPreviousNode(node);
+                    found = Regex.IsMatch(node.Text + GetDetails(node), findText, RegexOptions.IgnoreCase);
+                }
+                while (!ReferenceEquals(node, startNode) && !found);
+
+                if (found)
+                {
+                    // If the node is in a detached subtree,
+                    // we must attach it before setting the selected node
+                    if ((object)node.TreeView == null)
+                    {
+                        TreeNode ancestor = node;
+
+                        while ((object)ancestor.Parent != null)
+                            ancestor = ancestor.Parent;
+
+                        TreeNode recordNode = (TreeNode)ancestor.Tag;
+                        TreeNode[] childNodes = ancestor.Nodes.Cast<TreeNode>().ToArray();
+                        ancestor.Nodes.Clear();
+                        recordNode.Nodes.Clear();
+                        recordNode.Nodes.AddRange(childNodes);
+                    }
+
+                    RecordTree.SelectedNode = node;
+                }
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
         }
 
         // Gets the next node after the given node in an inorder traversal of the tree.
@@ -389,12 +473,29 @@ namespace PQDIFExplorer
 
             if ((object)nextNode == null)
             {
-                nextNode = currentNode.Parent;
+                nextNode = currentNode;
 
-                while ((object)nextNode != null && (object)nextNode.NextNode == null)
+                while ((object)nextNode != null && !(nextNode.Tag is TreeNode) && (object)nextNode.NextNode == null)
                     nextNode = nextNode.Parent;
 
+                // Special case:
+                // If at this point the tag of nextNode is a TreeNode,
+                // that means this is the end of a detached subtree so
+                // we need to move to the next node of the tree view
+                nextNode = (nextNode?.Tag as TreeNode) ?? nextNode;
+
                 nextNode = nextNode?.NextNode ?? RecordTree.Nodes[0];
+            }
+
+            // Special case:
+            // If the node has no tag, it is a stub node
+            // and we need to create the parent's subtree
+            if ((object)nextNode.Tag == null)
+            {
+                TreeNode recordNode = nextNode.Parent;
+                TreeNode subTree = ToTreeNode(((Record)recordNode.Tag).Body?.Collection ?? new CollectionElement());
+                subTree.Tag = recordNode;
+                nextNode = subTree.FirstNode;
             }
 
             return nextNode;
@@ -409,8 +510,31 @@ namespace PQDIFExplorer
             //   3. If there is no parent node, use the last descendant node of the last node in the tree
             TreeNode previousNode = currentNode.PrevNode ?? currentNode.Parent ?? RecordTree.Nodes[RecordTree.Nodes.Count - 1];
 
+            // Special case:
+            // If at this point the tag of previousNode is a TreeNode,
+            // that means this is the beginning of a detached subtree
+            // so we need to move to return to the nodes of the tree view
+            TreeNode tagNode = previousNode.Tag as TreeNode;
+
+            if ((object)tagNode != null)
+                return tagNode;
+
             if (previousNode != currentNode.Parent)
             {
+                while ((object)previousNode.LastNode != null)
+                    previousNode = previousNode.LastNode;
+            }
+
+            // Special case:
+            // If the node has no tag, it is a stub node
+            // and we need to create the parent's subtree
+            if ((object)previousNode.Tag == null)
+            {
+                TreeNode recordNode = previousNode.Parent;
+                TreeNode subTree = ToTreeNode(((Record)recordNode.Tag).Body?.Collection ?? new CollectionElement());
+                subTree.Tag = recordNode;
+                previousNode = subTree.LastNode;
+
                 while ((object)previousNode.LastNode != null)
                     previousNode = previousNode.LastNode;
             }
@@ -523,6 +647,63 @@ namespace PQDIFExplorer
             {
                 return $"ERROR ({element.ValueAsHex()})";
             }
+        }
+
+        // Creates a new tree view and replaces the old one.
+        private void CreateRecordTree()
+        {
+            TreeView oldTree = RecordTree;
+
+            SplitContainer.Panel1.Controls.Clear();
+
+            if ((object)oldTree != null)
+            {
+                // Create asynchronous loop to gradually dispose of
+                // the old record tree so that the UI does not hang
+                EventHandler disposeAction = null;
+
+                disposeAction = (sender, args) =>
+                {
+                    int count = Math.Min(oldTree.Nodes.Count, 10);
+                    
+                    for (int i = 0; i < count; i++)
+                        oldTree.Nodes.RemoveAt(oldTree.Nodes.Count - 1);
+
+                    if (oldTree.Nodes.Count == 0)
+                    {
+                        Application.Idle -= disposeAction;
+                        oldTree.Dispose();
+                    }
+                };
+
+                Application.Idle += disposeAction;
+            }
+
+            RecordTree = new BufferedTreeView();
+            RecordTree.Dock = DockStyle.Fill;
+            RecordTree.Location = new Point(0, 0);
+            RecordTree.Name = "RecordTree";
+            RecordTree.Size = new Size(288, 545);
+            RecordTree.TabIndex = 0;
+            RecordTree.BeforeExpand += RecordTree_BeforeExpand;
+            RecordTree.AfterSelect += RecordTree_AfterSelect;
+            RecordTree.KeyDown += RecordTree_KeyDown;
+            RecordTree.MouseDown += RecordTree_MouseDown;
+
+            // Create the list of images to be displayed in the tree view
+            RecordTree.ImageList = new ImageList();
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.default.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.container.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.datasource.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.monitorsettings.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.observation.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.blank.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.collection.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.vector.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.scalar.png")));
+            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.error.png")));
+
+            SplitContainer.Panel1.Controls.Add(RecordTree);
         }
 
         // Creates the context menu for the given tree node.
@@ -718,19 +899,6 @@ namespace PQDIFExplorer
             // Set splash screen label image
             SplashScreenLabel.Image = Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.SplashScreen.png"));
 
-            // Create the list of images to be displayed in the tree view
-            RecordTree.ImageList = new ImageList();
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.default.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.container.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.datasource.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.monitorsettings.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.observation.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.blank.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.collection.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.vector.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.scalar.png")));
-            RecordTree.ImageList.Images.Add(Image.FromStream(typeof(MainWindow).Assembly.GetManifestResourceStream("PQDIFExplorer.Icons.error.png")));
-
 
             // Set initial size of the form
             if (Settings.Default.WindowSize != null)
@@ -875,6 +1043,19 @@ namespace PQDIFExplorer
             DetailsTextBox.AppendText(details);
         }
 
+        // Handler called before expanding a node in the tree view.
+        private void RecordTree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            Record record = e.Node.Tag as Record;
+            TreeNodeCollection children = e.Node.Nodes;
+            
+            if ((object)record != null && (object)children[0].Tag == null)
+            {
+                children.Clear();
+                children.AddRange(record.Body.Collection.Elements.Select(ToTreeNode).ToArray());
+            }
+        }
+
         // Handler called when the user clicks on the tree view.
         private void RecordTree_MouseDown(object sender, MouseEventArgs e)
         {
@@ -945,6 +1126,11 @@ namespace PQDIFExplorer
                 Settings.Default.WindowSize = RestoreBounds.Size;
 
             Settings.Default.Save();
+
+            // Explicitly terminate the process here,
+            // otherwise a sufficiently large tree view may
+            // suspend shutdown of the application for several minutes
+            Environment.Exit(0);
         }
 
         // Handler called when the user selects the Save option in the toolbar menu.
